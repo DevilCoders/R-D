@@ -4,11 +4,12 @@
   "private": true,
   "description": "Interactive DEVIL EYE R&D application prototype with local demo backend",
   "scripts": {
-    "check": "node --check src/app.js && node --check src/demo-api.js && node --check src/enhancements.js && node --check server/index.mjs",
+    "check": "node --check src/app.js && node --check src/demo-api.js && node --check src/enhancements.js && node --check server/index.mjs && node --check scripts/smoke-demo.mjs",
     "build": "npm run check && tailwindcss -i ./src/input.css -o ./assets/app.css --minify && node scripts/package.mjs",
     "dev": "tailwindcss -i ./src/input.css -o ./assets/app.css --watch",
     "serve": "node server/index.mjs",
-    "demo": "npm run build && node server/index.mjs"
+    "demo": "npm run build && node server/index.mjs",
+    "smoke": "node scripts/smoke-demo.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",

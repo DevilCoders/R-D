@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Validate JavaScript and build Tailwind CSS v4
-        run: npm run build
+        run: npm run build && npm run smoke
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
