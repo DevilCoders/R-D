@@ -31,7 +31,7 @@ try{
 
   const home=await fetch(base+"/");
   assert.equal(home.status,200);
-  assert.match(await home.text(),/Concept Library/);
+  assert.match(await home.text(),/DEVIL EYE \/ R&D/);
 
   const map=await fetch(base+"/assets/world-map.svg");
   assert.equal(map.status,200);
