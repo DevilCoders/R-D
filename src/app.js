@@ -7,15 +7,19 @@
   const safe = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const glyph = {dashboard:"▦",targets:"◎",recon:"⌕",osint:"◎",domain:"▤",network:"⌘",social:"♧",geo:"⌖",tech:"⬡",surface:"◉",deep:"♆",dark:"◈",vuln:"⌁",exploit:"⚒",security:"⛨",operations:"⌘",post:"↗",privilege:"♢",lateral:"⇄",persistence:"◈",reports:"▤",intelligence:"⌬",threat:"◉",knowledge:"▤",settings:"⚙"};
   const navGroups = [
-    {label:"GLOBAL VIEW",items:[["dashboard","Dashboard","dashboard"],["targets","Targets","targets"]]},
-    {label:"RECONNAISSANCE",items:[["reconnaissance","Reconnaissance","recon"],["osint-search","OSINT Search","osint"],["domain-analysis","Domain Analysis","domain"],["ip-analysis","IP / Port / MAC Analysis","network"],["network-mapping","Network Mapping","network"],["social-intelligence","Social Intelligence","social"],["geolocation","Geolocation","geo"],["tech-stack","Tech Stack","tech"]]},
-    {label:"WEB INTELLIGENCE",items:[["surface-web","Surface Web","surface"],["deep-web","Deep Web","deep"],["dark-web","Dark Web","dark"]]},
-    {label:"VULNERABILITY",items:[["vuln-scan","Vulnerability Scan","vuln"],["exploit-search","Exploit Search","exploit"],["security-analysis","Security Analysis","security"]]},
-    {label:"OPERATIONS",items:[["operations","Operations","operations"],["post-exploitation","Post Exploitation","post"],["privilege-escalation","Privilege Escalation","privilege"],["lateral-movement","Lateral Movement","lateral"],["persistence-review","Persistence Review","persistence"]]},
-    {label:"INTELLIGENCE",items:[["intelligence","Intelligence Fusion","intelligence"],["threat-feed","Threat Feed","threat"],["knowledge-base","Knowledge Base","knowledge"],["reports","Reports & Evidence","reports"]]},
-    {label:"SYSTEM",items:[["settings","Settings","settings"]]}
+    {id:"global",label:"GLOBAL VIEW",icon:"dashboard",items:[["dashboard","Dashboard","dashboard"],["targets","Targets","targets"]]},
+    {id:"recon",label:"RECON",icon:"recon",items:[["reconnaissance","Reconnaissance","recon"],["osint-search","OSINT Search","osint"],["domain-analysis","Domain Analysis","domain"],["ip-analysis","IP / Port / MAC Analysis","network"],["network-mapping","Network Mapping","network"],["social-intelligence","Social Intelligence","social"],["geolocation","Geolocation","geo"],["tech-stack","Tech Stack","tech"]]},
+    {id:"web",label:"WEB INTELLIGENCE",icon:"surface",items:[["surface-web","Surface Web","surface"],["deep-web","Deep Web","deep"],["dark-web","Dark Web","dark"]]},
+    {id:"vulnerability",label:"VULNERABILITY",icon:"vuln",items:[["vuln-scan","Vulnerability Scan","vuln"],["exploit-search","Exploit Search","exploit"],["security-analysis","Security Analysis","security"]]},
+    {id:"operations",label:"OPERATIONS",icon:"operations",items:[["operations","Operations","operations"],["post-exploitation","Post Exploitation","post"],["privilege-escalation","Privilege Escalation","privilege"],["lateral-movement","Lateral Movement","lateral"],["persistence-review","Persistence Review","persistence"]]},
+    {id:"intelligence",label:"INTELLIGENCE",icon:"intelligence",items:[["intelligence","Intelligence Fusion","intelligence"],["threat-feed","Threat Feed","threat"],["knowledge-base","Knowledge Base","knowledge"],["reports","Reports & Evidence","reports"]]},
+    {id:"system",label:"SYSTEM",icon:"settings",items:[["settings","Settings","settings"]]}
   ];
-  const topNav = [["dashboard","GLOBAL VIEW"],["targets","TARGETS"],["operations","OPERATIONS"],["intelligence","INTELLIGENCE"],["threat-feed","THREAT FEED"]];
+  const topNav = [["dashboard","GLOBAL VIEW","dashboard"],["targets","TARGETS","targets"],["operations","OPERATIONS","operations"],["intelligence","INTELLIGENCE","intelligence"],["threat-feed","THREAT FEED","threat"]];
+  const iconAliases = {"threat-feed":"threat","concept-library":"knowledge"};
+  function iconFor(key){return glyph[key] || glyph[iconAliases[key]] || "◦";}
+  let navExpanded = {};
+  try { navExpanded = JSON.parse(localStorage.getItem("rd-nav-expanded") || "{}") || {}; } catch (_) { navExpanded = {}; }
   const pages = {
     dashboard:["Global View","COMMAND CENTER / 00","A unified operational picture across authorized research, assessment, and intelligence work.","GLOBAL OVERVIEW","overview"],
     targets:["Targets","SCOPE MANAGEMENT / 01","A structured registry of approved assets, scope boundaries, exclusions, and ownership.","TARGET REGISTRY","targets"],
@@ -101,10 +105,29 @@
   let toastTimer;
   function savedTargets(){try{return JSON.parse(localStorage.getItem("rd-demo-targets")||"[]");}catch(e){return [];}}
   function renderSidebar(){
-    $("#sidebar-groups").innerHTML=navGroups.map(group=>'<div class="nav-group"><div class="nav-group-label">'+group.label+'</div>'+group.items.map(item=>'<button type="button" class="side-link '+(activePage===item[0]?"active":"")+'" data-page="'+item[0]+'" aria-current="'+(activePage===item[0]?"page":"false")+'"><span class="side-icon">'+(glyph[item[2]]||"◦")+'</span><span>'+item[1]+'</span>'+(activePage===item[0]?'<i class="side-active-indicator"></i>':'')+'</button>').join("")+'</div>').join("");
+    const container=$("#sidebar-groups");
+    container.innerHTML=navGroups.map(group=>{
+      const hasActive=group.items.some(item=>activePage===item[0]);
+      const expanded=hasActive || navExpanded[group.id]!==false;
+      return '<section class="nav-group" data-nav-group="'+safe(group.id)+'">'+
+        '<button type="button" class="nav-group-toggle" data-nav-toggle="'+safe(group.id)+'" aria-expanded="'+String(expanded)+'">'+
+          '<span class="nav-group-icon">'+iconFor(group.icon)+'</span><span>'+safe(group.label)+'</span>'+
+          '<span class="nav-group-count">'+String(group.items.length).padStart(2,"0")+'</span><span class="nav-chevron">⌄</span>'+
+        '</button>'+
+        '<div class="nav-children" data-nav-children="'+safe(group.id)+'" '+(expanded?"":"hidden")+'>'+
+          group.items.map(item=>{
+            const isActive=activePage===item[0],isDemo=item[3]==="demo";
+            const targetAttr=isDemo?' data-demo-page="'+safe(item[0])+'"':' data-page="'+safe(item[0])+'"';
+            return '<button type="button" class="side-link '+(isActive?"active":"")+'"'+targetAttr+' aria-current="'+(isActive?"page":"false")+'">'+
+              '<span class="side-icon">'+iconFor(item[2])+'</span><span>'+safe(item[1])+'</span>'+
+              (isActive?'<i class="side-active-indicator"></i>':'')+
+            '</button>';
+          }).join("")+
+        '</div></section>';
+    }).join("");
   }
   function renderTop(){
-    $("#top-nav").innerHTML=topNav.map(item=>'<button type="button" class="top-link '+(activeTop===item[0]?"active":"")+'" data-top-page="'+item[0]+'"><span>'+glyph[item[0]]+'</span>'+item[1]+'</button>').join("");
+    $("#top-nav").innerHTML=topNav.map(item=>'<button type="button" class="top-link '+(activeTop===item[0]?"active":"")+'" data-top-page="'+safe(item[0])+'"><span>'+iconFor(item[2]||item[0])+'</span>'+safe(item[1])+'</button>').join("");
   }
   function setTopForPage(id){
     const map={targets:"targets",operations:"operations","post-exploitation":"operations","privilege-escalation":"operations","lateral-movement":"operations","persistence-review":"operations",intelligence:"intelligence","knowledge-base":"intelligence",reports:"operations","threat-feed":"threat-feed"};
@@ -241,7 +264,7 @@
     return pageHeading("settings")+
       '<div class="content-grid lower-content-grid">'+panel("Interface preferences","LOCAL SETTINGS",'<label class="setting-row"><span><b>Compact tables</b><small>Reduce table row height in this browser.</small></span><input type="checkbox" data-pref="compact" '+(prefs.compact?"checked":"")+'></label><label class="setting-row"><span><b>Motion effects</b><small>Enable subtle UI motion and hover effects.</small></span><input type="checkbox" data-pref="motion" '+(prefs.motion!==false?"checked":"")+'></label><label class="setting-row"><span><b>Show demo data banners</b><small>Keep prototype/sample data labels visible.</small></span><input type="checkbox" data-pref="demo" '+(prefs.demo!==false?"checked":"")+'></label>')+
       panel("Integration boundaries","NOT CONNECTED",["AI inference services","Scanner and assessment workers","Evidence and artifact storage","Identity and access management","Private node / server scheduler"].map(x=>'<div class="health-row"><span>'+x+'</span><span class="status-pill neutral">Not connected</span></div>').join(""))+'</div>'+
-      panel("Prototype information","BUILD",'<div class="context-stat"><span>Interface</span><b>HTML / JavaScript</b></div><div class="context-stat"><span>CSS pipeline</span><b>Tailwind CSS v4</b></div><div class="context-stat"><span>Data mode</span><b>Sample + localStorage</b></div><div class="context-stat"><span>Backend</span><b>Not implemented</b></div>');
+      panel("Prototype information","BUILD",'<div class="context-stat"><span>Interface</span><b>HTML / JavaScript</b></div><div class="context-stat"><span>CSS pipeline</span><b>Tailwind CSS v4</b></div><div class="context-stat"><span>Data mode</span><b>Sample + localStorage</b></div><div class="context-stat"><span>Backend</span><b>Local Node demo / browser fallback</b></div>');
   }
   function renderPage(id){
     if(!pages[id])id="dashboard";
@@ -338,7 +361,18 @@
   }
   function init(){
     renderSidebar();renderPage(location.hash.slice(1)||"dashboard");
-    $("#sidebar-groups").addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(b)navigate(b.dataset.page);});
+    $("#sidebar-groups").addEventListener("click",e=>{
+      const toggle=e.target.closest("[data-nav-toggle]");
+      if(toggle){
+        const id=toggle.dataset.navToggle;
+        navExpanded[id]=toggle.getAttribute("aria-expanded")!=="true";
+        try{localStorage.setItem("rd-nav-expanded",JSON.stringify(navExpanded));}catch(_){}
+        renderSidebar();
+        return;
+      }
+      const b=e.target.closest("[data-page]");
+      if(b)navigate(b.dataset.page);
+    });
     $("#top-nav").addEventListener("click",e=>{const b=e.target.closest("[data-top-page]");if(b)navigate(b.dataset.topPage);});
     $("#menu-toggle").addEventListener("click",()=>{const open=document.body.classList.toggle("nav-open");$("#menu-toggle").setAttribute("aria-expanded",String(open));});
     $("#mobile-scrim").addEventListener("click",closeMobileNav);
