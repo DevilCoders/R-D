@@ -39,7 +39,7 @@ try{
 
   const concept=await fetch(base+"/concept/18.png");
   assert.equal(concept.status,200);
-  assert.match(concept.headers.get("content-type")||"","image\/png");
+  assert.equal(concept.headers.get("content-type"),"image/png");
   assert.ok((await concept.arrayBuffer()).byteLength>10000);
 
   const denied=await json("/api/records","POST",{module:"targets",title:"unauthorized.test",authorized:false});
