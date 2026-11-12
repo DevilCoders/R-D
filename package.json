@@ -4,7 +4,8 @@
   "private": true,
   "description": "Interactive DEVIL EYE R&D application prototype",
   "scripts": {
-    "build": "tailwindcss -i ./src/input.css -o ./assets/app.css --minify && node scripts/package.mjs",
+    "check": "node --check src/app.js",
+    "build": "npm run check && tailwindcss -i ./src/input.css -o ./assets/app.css --minify && node scripts/package.mjs",
     "dev": "tailwindcss -i ./src/input.css -o ./assets/app.css --watch"
   },
   "devDependencies": {
