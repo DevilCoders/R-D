@@ -73,7 +73,7 @@
   };
   const dataRows = {
     reconnaissance:[["AST-001","portal.example.test","Domain / HTTPS","Observed","09:42"],["AST-002","api.example.test","API endpoint","Observed","09:38"],["AST-003","198.51.100.24","Documentation IP range","In scope","09:31"],["AST-004","mail.example.test","Mail gateway","Review","09:26"]],
-    "osint-search":[["OSINT-2418","Public security advisory","Vendor bulletin","Verified source","2 min"],["OSINT-2417","Organization press release","Official website","Collected","8 min"],["OSINT-2416","Public code reference","Code repository","Needs review","14 min"],["OSINT-2415","Public DNS change","DNS observation","Correlated","22 min"]],
+    "osint-search":[["OSINT-2418","Public security advisory","Vendor bulletin","Verified source","2 min"],["OSINT-2417","Organization press release","Official website","Collected","8 min"],["OSINT-2416","Public code reference","Code repository","Needs review","14 min"],["OSINT-2415","Public DNS change","Technical source","Correlated","22 min"],["OSINT-2414","Public researcher post","Social media","Collected","30 min"],["OSINT-2413","Public incident news report","News & media","Source reviewed","38 min"],["OSINT-2412","Public forum thread","Forums","Needs review","46 min"],["OSINT-2411","Public corporate filing","Public records","Verified source","52 min"]],
     "domain-analysis":[["example.test","A / AAAA","198.51.100.24","Passive observation","Current"],["example.test","MX","mail.example.test","DNS record","Current"],["www.example.test","TLS","Certificate metadata","Public source","Current"],["api.example.test","CNAME","edge.example.test","DNS record","Review"]],
     "ip-analysis":[["198.51.100.24","HTTPS / 443","TCP","Documentation range","Observed"],["203.0.113.18","SSH / 22","TCP","Documentation range","Review"],["192.0.2.40","DNS / 53","UDP","Documentation range","Observed"],["00:11:22:33:44:55","MAC sample","Ethernet","Locally supplied","Imported"]],
     "social-intelligence":[["PROFILE-021","Public researcher profile","Professional network","Public","09:42"],["MENTION-118","Product security discussion","Public forum","Collected","09:37"],["TOPIC-042","Patch Tuesday","Public posts","Correlated","09:31"],["ENTITY-016","Organization reference","Public profile","Needs review","09:24"]],
@@ -395,5 +395,18 @@
     document.body.classList.toggle("compact-tables",!!prefs.compact);
     document.body.classList.toggle("reduced-motion",prefs.motion===false);
   }
+  window.DevilEyeNavigation = {
+    registerGroup(group){
+      if(!group || !group.id || !Array.isArray(group.items)) return false;
+      const index=navGroups.findIndex(item=>item.id===group.id);
+      if(index>=0) navGroups[index]=group; else navGroups.push(group);
+      if(navExpanded[group.id]===undefined) navExpanded[group.id]=true;
+      try{localStorage.setItem("rd-nav-expanded",JSON.stringify(navExpanded));}catch(_){}
+      renderSidebar();
+      return true;
+    },
+    openGroup(id){navExpanded[id]=true;try{localStorage.setItem("rd-nav-expanded",JSON.stringify(navExpanded));}catch(_){}renderSidebar();},
+    getGroups(){return navGroups.map(group=>({id:group.id,label:group.label,items:group.items.map(item=>item.slice())}));}
+  };
   document.addEventListener("DOMContentLoaded",init);
 })();
