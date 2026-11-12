@@ -1,0 +1,14 @@
+{
+  "name": "devil-eye-rd-interface",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive DEVIL EYE R&D application prototype",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./assets/app.css --minify",
+    "dev": "tailwindcss -i ./src/input.css -o ./assets/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  }
+}
