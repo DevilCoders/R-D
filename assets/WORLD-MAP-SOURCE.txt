@@ -1,0 +1,7 @@
+World country boundary geometry
+
+Dataset: Natural Earth 1:110m Admin 0 – Countries.
+Source repository: https://github.com/BenPortner/geojson-atlas
+Source file: geojson/natural_earth/world/110m/ne_110m_admin_0_countries.geojson
+License: CC0 1.0 Universal (see source repository LICENSE.txt).
+This SVG is a simplified local rendering of those country boundary geometries.
