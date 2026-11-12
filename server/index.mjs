@@ -16,7 +16,7 @@ async function readBody(req){let raw="";for await(const chunk of req){raw+=chunk
 function clean(v,max=240){return String(v??"").trim().slice(0,max);}
 function log(action,detail){db.audit.unshift({id:"AUD-"+crypto.randomUUID().slice(0,8).toUpperCase(),action,detail:clean(detail),at:new Date().toISOString(),origin:"LOCAL NODE DEMO API"});db.audit=db.audit.slice(0,500);}
 async function api(req,res,url){
- const route=url.pathname.replace(/^.*\\/api\\//,"");
+ const route=url.pathname.split("/api/").pop();
  if(req.method==="GET"&&route==="health")return send(res,200,{ok:true,service:"DEVIL EYE DEMO BACKEND",mode:"LOCAL_DEMO",data:"SYNTHETIC ONLY",targetExecution:false,now:new Date().toISOString(),uptimeSeconds:Math.floor(process.uptime())});
  if(req.method==="GET"&&route==="state")return send(res,200,db);
  if(req.method==="GET"&&route==="audit")return send(res,200,{items:db.audit});
@@ -52,7 +52,7 @@ async function api(req,res,url){
 }
 const mime={".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".json":"application/json; charset=utf-8",".svg":"image/svg+xml",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".webp":"image/webp",".ico":"image/x-icon"};
 async function staticFile(req,res,url){
- const decoded=decodeURIComponent(url.pathname),relative=decoded==="/"?"index.html":decoded.replace(/^\\/+ /,"");
+ const decoded=decodeURIComponent(url.pathname),relative=decoded.split("/").filter(Boolean).join("/")||"index.html";
  const file=path.resolve(webRoot,relative);
  if(!file.startsWith(webRoot+path.sep)&&file!==path.join(webRoot,"index.html"))return send(res,403,{message:"Forbidden"});
  try{const data=await readFile(file);res.writeHead(200,{"Content-Type":mime[path.extname(file)]||"application/octet-stream","Cache-Control":"no-store"});res.end(req.method==="HEAD"?undefined:data);}catch{return send(res,404,{message:"Demo resource not found"});}
