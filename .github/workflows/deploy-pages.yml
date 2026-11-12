@@ -34,22 +34,39 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Configure GitHub Pages
-        id: pages
-        uses: actions/configure-pages@v5
-        continue-on-error: true
-        with:
-          enablement: true
-      - name: Explain required one-time Pages setup
-        if: steps.pages.outcome != 'success'
-        run: echo "::warning::Build passed. Enable Settings > Pages > Build and deployment > Source > GitHub Actions, then rerun this workflow."
+      - name: Verify that GitHub Pages is enabled
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          node --input-type=module <<'NODE'
+          const url = `https://api.github.com/repos/${process.env.GH_REPOSITORY}/pages`;
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${process.env.GH_TOKEN}`,
+              Accept: "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28"
+            }
+          });
+          if (response.status === 404) {
+            console.error("GitHub Pages is not enabled for this repository yet.");
+            console.error("Open Settings > Pages > Build and deployment, then set Source to GitHub Actions.");
+            process.exit(1);
+          }
+          if (!response.ok) {
+            console.error(`Could not verify GitHub Pages configuration (HTTP ${response.status}).`);
+            console.error(await response.text());
+            process.exit(1);
+          }
+          console.log("GitHub Pages site is enabled.");
+          NODE
       - name: Deploy to GitHub Pages
         id: deployment
-        if: steps.pages.outcome == 'success'
         uses: actions/deploy-pages@v4
