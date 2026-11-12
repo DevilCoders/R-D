@@ -1,2 +1,2 @@
-# R-D
+# R$D
 Next-Generation Comprehensive Red Team Platform
