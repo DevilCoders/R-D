@@ -40,10 +40,16 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Configure and enable GitHub Pages
+      - name: Configure GitHub Pages
+        id: pages
         uses: actions/configure-pages@v5
+        continue-on-error: true
         with:
           enablement: true
+      - name: Explain required one-time Pages setup
+        if: steps.pages.outcome != 'success'
+        run: echo "::warning::Build passed. Enable Settings > Pages > Build and deployment > Source > GitHub Actions, then rerun this workflow."
       - name: Deploy to GitHub Pages
         id: deployment
+        if: steps.pages.outcome == 'success'
         uses: actions/deploy-pages@v4
