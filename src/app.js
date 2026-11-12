@@ -132,7 +132,15 @@
     return panel(title||"Recent activity","ACTIVITY STREAM",activities.map(a=>'<div class="activity-row"><span class="activity-bullet '+a[3]+'"></span><div><strong>'+a[0]+'</strong><p>'+a[1]+'</p></div><time>'+a[2]+'</time></div>').join(""));
   }
   function worldMap(){
-    return '<div class="world-map" role="img" aria-label="Illustrative global signal distribution"><svg viewBox="0 0 720 300" preserveAspectRatio="xMidYMid meet"><defs><pattern id="mapgrid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#1b2835" stroke-width=".7"/></pattern><radialGradient id="mapglow"><stop stop-color="#ff3348" stop-opacity=".8"/><stop offset="1" stop-color="#ff3348" stop-opacity="0"/></radialGradient></defs><rect width="720" height="300" fill="url(#mapgrid)"/><g fill="#16212c" stroke="#324150" stroke-width="1.1"><path d="m60 74 27-25 58-14 53 15 25 25-15 22-29 5-15 26-34 13-19-10-18 13-17-17-12-29-24-2zM165 161l29 15 18 33-11 57-20 16-16-29-11-43zM333 65l31-18 47 6 17 20-11 19-40 5-29-10zM359 116l42-15 42 16 20 33-19 40-30 18-13 44-23 18-18-29 2-40-27-28zM450 66l36-20 81 8 41 27-24 22-40-3-14 20-42-13-22 10-29-22zM549 181l36-15 50 21-14 27-46 15-29-17z"/></g><g stroke="#91313e" stroke-width="1.4" fill="none" opacity=".8"><path d="M141 95Q302 8 409 143T585 89"/><path d="M141 95Q256 253 409 143"/><path d="M409 143Q506 220 585 89"/><path d="M141 95Q351 170 585 89"/></g><g fill="#ff4c5b"><circle cx="141" cy="95" r="4"/><circle cx="409" cy="143" r="5"/><circle cx="585" cy="89" r="4"/><circle cx="302" cy="187" r="3"/><circle cx="510" cy="207" r="3"/></g><g fill="url(#mapglow)"><circle cx="141" cy="95" r="34"/><circle cx="409" cy="143" r="42"/><circle cx="585" cy="89" r="32"/></g></svg><div class="map-caption mono">ILLUSTRATIVE SIGNAL DISTRIBUTION · NO LIVE GEOLOCATION</div></div>';
+    const points=[
+      ["NEW YORK","29.4%","27.8%","New York · North America","Public-source demo signal","14"],
+      ["LONDON","50%","21.7%","London · Europe","Research-source demo signal","22"],
+      ["TALLINN","56.7%","17.2%","Tallinn · Northern Europe","Infrastructure-context demo signal","9"],
+      ["SINGAPORE","78.9%","49.4%","Singapore · Asia Pacific","Public advisory demo signal","18"],
+      ["TOKYO","88.6%","30.6%","Tokyo · East Asia","Threat-report demo signal","11"],
+      ["SÃO PAULO","24.7%","62.3%","São Paulo · South America","Public research demo signal","6"]
+    ];
+    return '<div class="world-map world-map-real"><img src="./assets/world-map.svg" alt="Complete world political map with country boundaries" loading="eager"><div class="world-map-points">'+points.map(p=>'<button type="button" class="world-map-point" style="left:'+p[1]+';top:'+p[2]+'" data-map-point="'+p[0]+'" data-map-location="'+p[3]+'" data-map-detail="'+p[4]+'" data-map-count="'+p[5]+'" aria-label="'+p[0]+' demo signal marker"><i></i><span>'+p[0]+'</span></button>').join("")+'</div><div class="world-map-overlay-label">WORLD / ALL REGIONS / SYNTHETIC SIGNALS</div><div class="world-map-scale mono">180°W <span>90°W</span> 0° <span>90°E</span> 180°E</div><div class="map-caption mono">FULL WORLD / COUNTRY OUTLINES / LOCAL DEMO DATA — NOT LIVE GEOLOCATION</div></div>';
   }
   function pageHeading(id,action){
     const p=pages[id];

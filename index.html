@@ -4,16 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07090d">
-  <meta name="description" content="DEVIL EYE R&D — modular Red Team research, reconnaissance, OSINT, vulnerability validation, operations, and security intelligence workspace.">
+  <meta name="description" content="DEVIL EYE R&D — modular research, reconnaissance, OSINT, infrastructure, vulnerability review, operations and intelligence demo workspace.">
   <meta property="og:title" content="DEVIL EYE / R&D — Intelligence Command Center">
-  <meta property="og:description" content="A unified research and assessment workspace. Authorized scope. Evidence first.">
+  <meta property="og:description" content="A modular operator workspace. Authorized scope. Synthetic demo data.">
   <title>DEVIL EYE / R&D — Command Center</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="./assets/app.css" rel="stylesheet">
+  <link href="./src/demo.css" rel="stylesheet">
   <script src="./src/app.js" defer></script>
+  <script src="./src/demo-api.js" defer></script>
+  <script src="./src/enhancements.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -26,7 +29,8 @@
       <nav class="top-nav" id="top-nav" aria-label="Primary workspaces"></nav>
       <div class="topbar-right">
         <label class="global-search"><span>⌕</span><input id="global-search" type="search" placeholder="Search workspace…" aria-label="Search workspace"><kbd>/</kbd></label>
-        <div class="system-status"><i></i><span><b>SYSTEM ONLINE</b><small>LOCAL PROTOTYPE</small></span></div>
+        <span id="demo-api-badge" class="demo-api-badge offline"><i></i> CHECKING DEMO API</span>
+        <div class="system-status"><i></i><span><b>SYSTEM ONLINE</b><small>DEMO ENVIRONMENT</small></span></div>
         <div class="clock-block"><strong id="system-clock">--:--:--</strong><small>LOCAL TIME</small></div>
         <a class="github-link" href="https://github.com/DevilCoders/R-D" target="_blank" rel="noreferrer" aria-label="Open GitHub repository">↗</a>
       </div>
@@ -38,14 +42,14 @@
       </div>
       <div class="sidebar-footer">
         <div class="policy-state"><span class="policy-shield">⛨</span><span><b>POLICY GATE</b><small>AUTHORIZED SCOPE / DEMO</small></span><i></i></div>
-        <div class="sidebar-user"><div class="user-avatar">RD</div><span><b>Research workspace</b><small>Local prototype</small></span><button type="button" aria-label="Workspace menu" data-toast="Workspace settings are not connected yet.">···</button></div>
+        <div class="sidebar-user"><div class="user-avatar">RD</div><span><b>Research workspace</b><small>Local demo backend</small></span><button type="button" aria-label="Workspace menu" data-toast="Workspace controls are available in Settings.">···</button></div>
       </div>
     </aside>
     <main class="main-area" id="workspace-scroll">
-      <div class="breadcrumb-bar"><div id="breadcrumbs"></div><div class="breadcrumb-right"><span class="environment-tag">● PROTOTYPE</span><span class="mono">BUILD 0.1.0</span></div></div>
-      <div class="workspace-heading"><div><span class="heading-line"></span><span id="page-title">Global View</span></div><div class="heading-actions"><button class="icon-button" type="button" data-toast="Notifications are represented by sample data.">♧<i></i></button><button class="icon-button" type="button" data-page="settings">⚙</button></div></div>
+      <div class="breadcrumb-bar"><div id="breadcrumbs"></div><div class="breadcrumb-right"><span class="environment-tag">● DEMO</span><span class="mono">BUILD 0.2.0</span></div></div>
+      <div class="workspace-heading"><div><span class="heading-line"></span><span id="page-title">Global View</span></div><div class="heading-actions"><button class="icon-button" type="button" data-demo-open="audit" aria-label="Audit log">♧<i></i></button><button class="icon-button" type="button" data-page="settings" aria-label="Settings">⚙</button></div></div>
       <div class="workspace-content" id="workspace"></div>
-      <footer class="app-footer"><span><b>DEVIL_EYE</b> / RESEARCH &amp; DEVELOPMENT</span><span>AUTHORIZED RESEARCH ONLY · EVIDENCE FIRST · <b class="footer-red">CONTROLLED BY DESIGN</b></span><span class="mono">UI PROTOTYPE / 0.1.0</span></footer>
+      <footer class="app-footer"><span><b>DEVIL_EYE</b> / RESEARCH &amp; DEVELOPMENT</span><span>AUTHORIZED RESEARCH ONLY · SYNTHETIC DEMO · <b class="footer-red">NO LIVE EXECUTION</b></span><span class="mono">UI / API DEMO · 0.2.0</span></footer>
     </main>
     <div class="mobile-scrim" id="mobile-scrim"></div>
   </div>
@@ -53,12 +57,12 @@
   <div class="modal-backdrop" id="target-modal" aria-hidden="true">
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-heading"><div><span class="section-kicker">SCOPE REGISTRY / LOCAL DEMO</span><h2 id="modal-title">Add approved asset</h2></div><button id="modal-close" class="icon-button" type="button" aria-label="Close dialog">×</button></div>
-      <p class="modal-description">This creates a browser-local prototype record only. It does not contact the asset or initiate reconnaissance.</p>
+      <p class="modal-description">This adds a synthetic scope record to the demo registry. It does not contact the asset or initiate reconnaissance.</p>
       <form id="target-form">
         <label class="form-field">Asset identifier<input id="target-value" type="text" maxlength="180" required placeholder="example.test or 192.0.2.10"></label>
         <label class="form-field">Asset type<select id="target-type"><option>Domain</option><option>IP address</option><option>Network range</option><option>Application / API</option><option>Other</option></select></label>
         <label class="authorization-check"><input id="target-authorized" type="checkbox"><span>I confirm this asset is explicitly authorized and within the written engagement scope.</span></label>
-        <div class="modal-actions"><button class="btn-secondary" type="button" id="modal-cancel">Cancel</button><button class="btn-primary" type="submit">Save local record ↗</button></div>
+        <div class="modal-actions"><button class="btn-secondary" type="button" id="modal-cancel">Cancel</button><button class="btn-primary" type="submit">Save demo record ↗</button></div>
       </form>
     </section>
   </div>
