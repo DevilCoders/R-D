@@ -65,7 +65,7 @@ The next implementation stage should replace static demo repositories with typed
 
 ## Deployment
 
-A GitHub Actions workflow builds Tailwind CSS v4 and deploys the static artifact to GitHub Pages on pushes to master.
+A GitHub Actions workflow builds Tailwind CSS v4 and packages the static artifact on pushes to master. To publish the first deployment, open **Settings → Pages → Build and deployment → Source → GitHub Actions** once, then run the workflow from the Actions tab. The integration cannot change this repository-level setting automatically.
 
 Expected Pages URL: https://devilcoders.github.io/R-D/
 
