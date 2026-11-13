@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import net from "node:net";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 const probe=net.createServer();
 await new Promise((resolve,reject)=>{probe.once("error",reject);probe.listen(0,"127.0.0.1",resolve);});
@@ -29,6 +30,26 @@ try{
   assert.equal(health.mode,"LOCAL_DEMO");
   assert.equal(health.targetExecution,false);
 
+  const appSource=await readFile("src/app.js","utf8");
+  const uiSource=await readFile("src/enhancements.js","utf8");
+  const manifest=JSON.parse(await readFile("concept/manifest.json","utf8"));
+  assert.match(appSource,/function iconFor/);
+  assert.match(appSource,/nav-group-toggle/);
+  assert.match(appSource,/registerGroup\\(group\\)/);
+  assert.match(uiSource,/demo-global-actions/);
+  assert.match(uiSource,/sourceMatchers/);
+  assert.match(uiSource,/data-record-delete/);
+  assert.equal(manifest.images.length,19);
+
+  for(const asset of ["src/enhancements.js","src/demo-api.js","src/demo.css"]){
+    const response=await fetch(base+"/"+asset);
+    assert.equal(response.status,200,asset+" must be packaged into dist");
+  }
+  for(const entry of manifest.images){
+    const response=await fetch(base+"/concept/"+encodeURIComponent(entry.file),{method:"HEAD"});
+    assert.equal(response.status,200,"Missing concept asset: "+entry.file);
+  }
+
   const home=await fetch(base+"/");
   assert.equal(home.status,200);
   assert.match(await home.text(),/DEVIL EYE \/ R&D/);
@@ -48,6 +69,9 @@ try{
   const record=await json("/api/records","POST",{module:"reconnaissance",title:"Smoke test observation",category:"test",status:"Needs review"});
   assert.equal(record.status,201);
   assert.ok(record.body.id);
+  const updated=await json("/api/records/"+record.body.id,"PATCH",{status:"Reviewed — demo"});
+  assert.equal(updated.status,200);
+  assert.equal(updated.body.status,"Reviewed — demo");
 
   const disposable=await json("/api/records","POST",{module:"reconnaissance",title:"Smoke delete record"});
   assert.equal(disposable.status,201);
@@ -63,6 +87,12 @@ try{
   assert.equal(approval.status,200);
   assert.match(approval.body.state,/Approved/);
 
+  const rejectedTask=await json("/api/tasks","POST",{module:"threat-feed",title:"Smoke reject workflow"});
+  assert.equal(rejectedTask.status,201);
+  const rejected=await json("/api/tasks/"+rejectedTask.body.id+"/decision","POST",{decision:"reject"});
+  assert.equal(rejected.status,200);
+  assert.equal(rejected.body.state,"Rejected");
+
   const cancelled=await json("/api/tasks/TASK-DEMO-001/cancel","POST",{});
   assert.equal(cancelled.status,200);
   assert.equal(cancelled.body.state,"Cancelled");
@@ -76,7 +106,7 @@ try{
   assert.equal(reset.status,200);
   const after=await json("/api/state");
   assert.equal(after.body.records.length,0);
-  console.log("DEMO SMOKE TEST PASSED: static app, world map, concept PNG, scope guard, records, task approval, cancellation, audit and reset.");
+  console.log("DEMO SMOKE TEST PASSED: hierarchical navigation markers, concept manifest and all 19 images, frontend packaging, world map, scope guard, record create/update/delete, task approve/reject/cancel, audit and reset.");
 }finally{
   child.kill("SIGTERM");
   await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once("exit",resolve);setTimeout(()=>{child.kill("SIGKILL");resolve();},2000).unref();});
