@@ -490,6 +490,9 @@
     });
     window.addEventListener("resize",()=>{if(globalResults&&!globalResults.hidden)positionGlobalSearch();});
     window.addEventListener("scroll",()=>{if(globalResults&&!globalResults.hidden)positionGlobalSearch();},true);
+    const userToggle=$("#sidebar-user-menu-toggle"),userMenu=$("#sidebar-user-menu");
+    userToggle.addEventListener("click",()=>{const open=userMenu.hidden;userMenu.hidden=!open;userToggle.setAttribute("aria-expanded",String(open));});
+    userMenu.addEventListener("click",e=>{if(e.target.closest("button")){userMenu.hidden=true;userToggle.setAttribute("aria-expanded","false");}});
     const workspaceToggle=$("#workspace-switcher"),workspaceMenu=$("#workspace-switcher-menu");
     workspaceToggle.addEventListener("click",()=>{const open=workspaceMenu.hidden;workspaceMenu.hidden=!open;workspaceToggle.setAttribute("aria-expanded",String(open));workspaceToggle.classList.toggle("open",open);});
     workspaceMenu.addEventListener("click",e=>{const item=e.target.closest("[data-workspace-choice]");if(item)updateWorkspaceChoice(item.dataset.workspaceChoice);});
@@ -504,11 +507,11 @@
       if(((e.key==="/"||e.code==="Slash")&&!editing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k")){
         e.preventDefault();$("#global-search").focus();renderGlobalSearch($("#global-search").value);
       }
-      if(e.key==="Escape"){closeTargetModal();closeMobileNav();closeWorkspaceMenu();closeGlobalSearch();}
+      if(e.key==="Escape"){closeTargetModal();closeMobileNav();closeWorkspaceMenu();closeGlobalSearch();const userMenu=$("#sidebar-user-menu"),userToggle=$("#sidebar-user-menu-toggle");if(userMenu)userMenu.hidden=true;if(userToggle)userToggle.setAttribute("aria-expanded","false");}
     });
     document.addEventListener("click",e=>{
       if(!e.target.closest(".global-search-wrap, #global-search-results"))closeGlobalSearch();
-      if(!e.target.closest(".sidebar-workspace-wrap"))closeWorkspaceMenu();
+      if(!e.target.closest(".sidebar-workspace-wrap"))closeWorkspaceMenu();if(!e.target.closest(".sidebar-user")){const userMenu=$("#sidebar-user-menu"),userToggle=$("#sidebar-user-menu-toggle");if(userMenu)userMenu.hidden=true;if(userToggle)userToggle.setAttribute("aria-expanded","false");}
     });
     const clock=()=>$("#system-clock").textContent=new Intl.DateTimeFormat(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date());
     clock();setInterval(clock,1000);

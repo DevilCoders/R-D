@@ -364,3 +364,9 @@ tbody tr:hover td { background: #151e29; }
  .global-search-wrap .global-search{padding:0 7px;gap:5px}
  .global-search-wrap .global-search kbd{display:none}
 }
+
+.sidebar-user{position:relative}
+.sidebar-user-menu{position:absolute;z-index:110;right:8px;bottom:calc(100% + 7px);width:190px;padding:6px;border:1px solid #394756;border-radius:5px;background:linear-gradient(145deg,#18212d,#0a1017);box-shadow:0 16px 45px #000c}
+.sidebar-user-menu[hidden]{display:none!important}
+.sidebar-user-menu button{display:block;width:100%;min-height:34px;padding:0 9px;border:1px solid transparent;border-radius:3px;background:transparent;color:#aebbc8;text-align:left;font-size:9px;cursor:pointer}
+.sidebar-user-menu button:hover,.sidebar-user-menu button:focus-visible{border-color:#6d3944;background:#24151c;color:#fff;outline:0}
