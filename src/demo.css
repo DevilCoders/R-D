@@ -56,3 +56,12 @@
 .demo-info-button{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;appearance:none;transition:border-color .18s,background .18s,transform .18s}
 .demo-info-button:hover{border-color:#96505c;background:#151f2b;transform:translateY(-1px)}
 .demo-info-button:focus-visible{outline:1px solid #e75a6c;outline-offset:2px}
+
+/* Inspectable dashboard and workspace data surfaces */
+#workspace [role="button"][data-demo-surface],
+#workspace [role="button"][data-demo-review]{cursor:pointer;transition:background .16s,border-color .16s,color .16s,transform .16s}
+#workspace [role="button"][data-demo-surface]:hover,
+#workspace [role="button"][data-demo-review]:hover{color:#eef3f8;background:#141e29}
+#workspace [role="button"][data-demo-surface]:focus-visible,
+#workspace [role="button"][data-demo-review]:focus-visible{outline:1px solid #e75a6c;outline-offset:2px}
+.metric-card[role="button"]:hover{border-color:#8b3947;transform:translateY(-1px)}

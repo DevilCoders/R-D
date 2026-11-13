@@ -132,7 +132,47 @@ function applyFilters(){
  const c=$(".demo-count",ws);
  if(c)c.textContent=rows.filter(r=>!r.classList.contains("hidden-row")).length+" / "+rows.length+" VISIBLE";
 }
-function currentBind(){if(current()==="concept-library")return;insertWorkspace();ensureFilters();const q=$("[data-local-search]");if(q&&!q.dataset.demoBound){q.dataset.demoBound="1";q.addEventListener("input",()=>{query=q.value;applyFilters();});}}
+function bindInteractiveSurfaces(){
+ const ws=$("#workspace");if(!ws)return;
+ const selectors=".workflow-row,.health-row,.activity-row,.trend-row,.demo-kv,.demo-bar-row,.metric-card,.context-stat,.check-row";
+ $$(selectors,ws).forEach(el=>{
+  if(el.dataset.demoReview || el.querySelector("button,a,input,select"))return;
+  let label="";
+  if(el.matches(".metric-card")){
+   const metric=$(".metric-top span",el)?.textContent||"Metric";
+   const value=$("strong",el)?.textContent||"";
+   const note=$("small",el)?.textContent||"";
+   label=[metric,value,note].filter(Boolean).join(" · ");
+  }else if(el.matches(".activity-row")){
+   label=[$("strong",el)?.textContent,$("p",el)?.textContent].filter(Boolean).join(" — ");
+  }else if(el.matches(".workflow-row")){
+   label=[$("strong",el)?.textContent,$("small",el)?.textContent].filter(Boolean).join(" — ");
+  }else if(el.matches(".demo-bar-row")){
+   label=[$("span",el)?.textContent,$$("b",el).map(x=>x.textContent).join(" ")].filter(Boolean).join(" — ");
+  }else{
+   const parts=$$("span,b,strong,small",el).map(x=>x.textContent.trim()).filter(Boolean);
+   label=parts.join(" — ")||el.textContent;
+  }
+  label=String(label||"").trim().replace(/\s+/g," ").slice(0,180);
+  if(!label)return;
+  el.dataset.demoReview=label;
+  el.dataset.demoSurface="true";
+  el.setAttribute("role","button");
+  el.setAttribute("tabindex","0");
+  el.setAttribute("aria-label","Inspect demo item: "+label);
+ });
+}
+function currentBind(){
+ if(current()==="concept-library")return;
+ insertWorkspace();
+ ensureFilters();
+ bindInteractiveSurfaces();
+ const q=$("#workspace [data-local-search]");
+ if(q&&!q.dataset.demoBound){
+  q.dataset.demoBound="1";
+  q.addEventListener("input",()=>{query=q.value;applyFilters();});
+ }
+}
 async function renderQueue(){const box=$("#demo-task-queue");if(!box||!api())return;try{const st=await api().state(),items=st.tasks||[];const rows=items.map(t=>"<div class='demo-audit-item'><code>"+esc(t.id)+"</code><span><b>"+esc(t.title)+"</b><br><small>"+esc(t.module||"operations")+" · "+esc(t.execution||"SIMULATED / NO EXTERNAL ACTION")+"</small><br><span class='demo-status "+(/Approved/.test(t.state)?"approved":/Rejected|Cancelled/.test(t.state)?"rejected":"pending")+"'>"+esc(t.state)+"</span></span><span>"+(t.state==="Awaiting approval"?"<button class='demo-small-button' data-demo-decision='approve' data-task='"+esc(t.id)+"'>Approve demo</button> <button class='demo-small-button' data-demo-decision='reject' data-task='"+esc(t.id)+"'>Reject</button>":"")+(t.state!=="Cancelled"&&t.state!=="Rejected"?" <button class='demo-small-button' data-demo-cancel='"+esc(t.id)+"'>Cancel</button>":"")+"</span></div>").join("");box.innerHTML="<div class='demo-viz-heading'><b>WORKFLOW QUEUE / "+items.length+" TASKS</b><span>"+api().mode()+"</span></div><div class='demo-viz-body'>"+(rows||"<div class='demo-empty'>No demo tasks yet.</div>")+"</div>";}catch(e){toast(e.message);}}
 async function renderDemoRecords(){
  const ws=$("#workspace");if(!ws||!api())return;
@@ -185,7 +225,16 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
  if(b.dataset.demoFilter){statusFilter=b.dataset.demoFilter;$$("[data-demo-filter]").forEach(x=>x.classList.toggle("active",x===b));applyFilters();return;}
  if(b.hasAttribute("data-source-filter")){const all=$$("[data-source-filter]");all.forEach(x=>x.classList.toggle("selected",x===b));const t=b.textContent.trim().toLowerCase();sourceFilter=/all sources/.test(t)?"all":/social/.test(t)?"social":/news/.test(t)?"news":/forum/.test(t)?"forums":/technical/.test(t)?"technical":/web pages/.test(t)?"web":"public";applyFilters();toast(sourceFilter==="all"?"Showing all local OSINT sources.":"Filtered OSINT demo sources: "+b.textContent.trim());return;}
  if(b.dataset.demoPort){const p=b.dataset.demoPort,box=$("#demo-port-info");if(box)box.innerHTML="<div class='demo-inspector'><span class='eyebrow'>PORT "+p+" / SYNTHETIC OBSERVATION</span><h4>"+([80,443,8080,8443].includes(+p)?"Sample service observed":"Reference port selected")+"</h4><p>Illustrative service metadata only. No packet or socket activity occurred.</p></div>";return;}
- if(b.dataset.demoReview){await api().addAudit("DEMO_REVIEW_OPENED",b.dataset.demoReview);toast("Opened sample review: "+b.dataset.demoReview);return;}
+ if(b.dataset.demoReview){
+  const label=b.dataset.demoReview;
+  const details=b.textContent.trim().replace(/\s+/g," ").slice(0,800);
+  try{await api().addAudit("DEMO_INSPECTOR_OPENED",label);}catch(_){}
+  openDialog("Workspace inspector",
+   "<div class='demo-inspector'><span class='eyebrow'>LOCAL DEMO / INSPECTOR</span><h4>"+esc(label)+"</h4><p>"+esc(details||"Synthetic workspace element.")+"</p><p style='margin-top:12px'>This item belongs to the current demo dataset. The inspector interaction is recorded in the local audit stream; no remote service or target was contacted.</p></div>"+
+   "<div class='demo-dialog-actions' style='padding:12px 0 0;border:0'><button class='demo-small-button' data-demo-action='add-record'>＋ Add related observation</button><button class='demo-small-button' data-demo-action='create-task'>＋ Create review task</button></div>",
+   "",false);
+  return;
+ }
  if(b.dataset.demoDecision){try{await api().decideTask(b.dataset.task,b.dataset.demoDecision);await renderQueue();toast("Demo task updated. No execution was triggered.");}catch(err){toast(err.message);}return;}
  if(b.dataset.demoCancel){try{await api().cancelTask(b.dataset.demoCancel);await renderQueue();toast("Demo task cancelled.");}catch(err){toast(err.message);}return;}
  if(b.dataset.conceptIndex!==undefined){
@@ -206,6 +255,11 @@ function init(){const overlay=document.createElement("div");overlay.id="demo-ove
  document.addEventListener("click",onClick,true);document.addEventListener("submit",onSubmit,true);
  document.addEventListener("click",e=>{const r=e.target.closest("#workspace tbody tr");if(r&&!e.target.closest("button,a,input,select"))detail(r);});
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDialog();if(e.key==="Enter"&&e.target.id==="osint-query"){e.preventDefault();e.stopImmediatePropagation();query=e.target.value;statusFilter="ALL";applyFilters();toast("Filtered local sample records. No external search was sent.");}if(e.key==="Enter"&&e.target.id==="global-search"){e.preventDefault();e.stopImmediatePropagation();const value=e.target.value.trim();if(value){const link=$("[data-page='osint-search']");if(link)link.click();setTimeout(()=>{const q=$("#osint-query");if(q){q.value=value;query=value;applyFilters();}},120);e.target.value="";}}},true);
+ document.addEventListener("keydown",e=>{
+  if((e.key==="Enter"||e.key===" ") && e.target.matches('[role="button"][data-demo-surface]')){
+   e.preventDefault();e.target.click();
+  }
+ });
  document.addEventListener("input",e=>{if(e.target.matches("[data-local-search]")){query=e.target.value;applyFilters();}});
  const g=$("#global-search");if(g)g.addEventListener("keydown",e=>{if(e.key==="Enter")e.stopImmediatePropagation();},true);
  addSidebar();if(current()==="concept-library")renderConceptLibrary();else currentBind();updateBadge();
