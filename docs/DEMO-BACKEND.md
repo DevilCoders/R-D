@@ -1,32 +1,54 @@
-# DEMO BACKEND
+# Local DEMO backend
 
-## Run locally
+The Node.js service is a runnable synthetic backend for the interactive application. It has no target connector, scanner, exploit runner, credential collection, external OSINT fetcher, hidden-service client or agent execution.
+
+## Start
 
 ```bash
 npm install
 npm run demo
 ```
 
-The server listens on 127.0.0.1:4174 by default and serves the generated `dist/` folder and a local API.
+Default address: `http://127.0.0.1:4174`.
 
-## API endpoints
+State is persisted to `server/data/demo-state.json` (ignored by Git). The static GitHub Pages site cannot run Node.js; its browser adapter provides matching demo methods using localStorage.
 
-| Method | Route | Purpose |
+## API
+
+| Method | Route | Demo behavior |
 |---|---|---|
-| GET | `/api/health` | Local mode health and synthetic-data flag |
-| GET | `/api/state` | Demo records, task queue, approvals, audit log |
-| GET | `/api/records?module=...` | List demo observations |
-| POST | `/api/records` | Add demo observation; scope records require confirmation |
-| PATCH | `/api/records/:id` | Update status or notes |
-| DELETE | `/api/records/:id` | Delete a demo record and append an audit event |
-| DELETE | `/api/records/:id` | Delete a demo record and append an audit event |
-| GET | `/api/tasks` | List demo tasks |
-| POST | `/api/tasks` | Create an approval-gated simulated task |
-| POST | `/api/tasks/:id/decision` | Approve or reject a simulation |
-| POST | `/api/tasks/:id/cancel` | Cancel a demo task |
-| GET/POST | `/api/audit` | Read / append demo audit events |
-| POST | `/api/reset` | Reset synthetic state |
+| GET | `/api/health` | Health, active mode and explicit synthetic-only flag |
+| GET | `/api/state` | All records, tasks, approvals and audit events |
+| GET | `/api/records?module=...` | List records, optionally filtered by workspace |
+| POST | `/api/records` | Create a synthetic target or observation; no scope confirmation gate |
+| PATCH | `/api/records/:id` | Update record status or notes |
+| DELETE | `/api/records/:id` | Delete a record and append an audit event |
+| GET | `/api/tasks` | List workflow tasks |
+| POST | `/api/tasks` | Create a simulated task in Awaiting approval |
+| POST | `/api/tasks/:id/decision` | Approve or reject a task |
+| POST | `/api/tasks/:id/run` | Run the synthetic task lifecycle and generate a mock result |
+| POST | `/api/tasks/:id/cancel` | Cancel a task |
+| GET | `/api/audit` | Read the synthetic event log |
+| POST | `/api/audit` | Append a demo event |
+| POST | `/api/reset` | Reset demo records, tasks and audit state |
 
-No endpoint starts scanners, exploitation, agents, credential workflows, external OSINT, Tor/I2P, or target network actions.
+A typical task lifecycle is:
 
-State is stored in `server/data/demo-state.json` and excluded from Git. GitHub Pages cannot run Node.js; its frontend uses browser localStorage fallback instead.
+`Awaiting approval → Approved — demo only → Running — demo → Completed — demo`
+
+Tasks can also transition to Rejected or Cancelled. The run endpoint only writes mock progress and a synthetic result. It never invokes a tool, contacts a target or makes an external request.
+
+## Browser adapter contract
+
+`src/demo-api.js` exposes `window.DevilEyeDemoAPI` with the shared methods:
+
+- `probe()`, `state()`
+- `addRecord()`, `updateRecord()`, `deleteRecord()`
+- `createTask()`, `decideTask()`, `runTask()`, `cancelTask()`
+- `addAudit()`, `reset()`
+
+The adapter first tries the local Node API. If no API server is available, it falls back to browser localStorage without changing the UI interaction model.
+
+## Test
+
+`npm run smoke` exercises static file delivery, the world map, every concept image, unrestricted demo target creation, record CRUD, task approval/rejection/run/cancel, audit events, reset and localStorage adapter behavior.

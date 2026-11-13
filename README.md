@@ -1,10 +1,10 @@
 # DEVIL EYE / R&D
 
-**Interactive application prototype with local demo services.**
+**Full interactive application demo — not a landing page.**
 
-This is an app-style operator workspace, not a marketing landing page. It has dedicated workspaces for Global View, Targets, Reconnaissance, OSINT, domain and network analysis, social intelligence, geolocation, technology stack, web intelligence, vulnerability review, operations, intelligence fusion, threat feeds, knowledge, evidence and reports.
+DEVIL EYE R&D is an app-style operator workspace prototype built with HTML, Vanilla JavaScript and Tailwind CSS v4. Every workspace is designed to behave like an application: panels, navigation, search, filters, inspectors, synthetic records, operations, live event history and exports are interactive.
 
-## Run the complete local demo
+## Run the local demo
 
 Requirements: Node.js 22+ and npm.
 
@@ -13,45 +13,56 @@ npm install
 npm run demo
 ```
 
-Open **http://127.0.0.1:4174**. This builds the Tailwind CSS v4 frontend and starts the local Node.js demo API. State persists in `server/data/demo-state.json`.
+Open **http://127.0.0.1:4174**. This builds the frontend and starts the local Node.js demo API. Demo state persists in `server/data/demo-state.json`.
 
-## Demo functionality
+## Demo controls
 
-- Dedicated routes for every sidebar workspace.
-- Search, status filters, record inspection and JSON export.
-- Concept Library with 19 original PNG references in `concept/`.
-- Complete gray world political map with country boundaries and interactive synthetic markers.
-- OSINT source filtering over a local sample dataset.
-- Add demo observations and scope records (scope requires explicit confirmation).
-- Create demo tasks, approve/reject, cancel and inspect state.
-- Audit events and local state reset.
-- Selectable network, map, port and intelligence graph points.
-- Persistent UI preferences and API mode indicator.
+- **Navigation:** collapsible parent groups with nested pages; current section highlighting; workspace selector menu with Research Environment, Red Team Lab, OSINT Research, Threat Intelligence and Evidence Review.
+- **Command search:** press `/` or `Ctrl+K` to open global search. Search workspace destinations and sample records, then navigate directly to the selected result.
+- **Shared workspace rail:** Add target, Add observation, Create task, Filters, Live log, Export and Refresh controls on workspace pages.
+- **Targets and records:** Add synthetic demo targets without a confirmation gate; create, inspect, update and delete demo observations.
+- **Operations:** create tasks, approve or reject them, run a synthetic simulation, cancel tasks and review the outcome.
+- **Live event stream:** every UI interaction and state change is recorded. Synthetic telemetry pulses are emitted periodically and displayed in every workspace.
+- **Research panels:** table search/filter, row inspection, selectable network graph nodes, map markers, port selectors, technology cards, workflow stages, checklist toggles and review inspectors.
+- **Concept Library:** 19 original references loaded from `concept/manifest.json`; add a PNG and manifest entry to extend the gallery.
+- **Preferences:** compact tables, reduced motion and demo-banner visibility persist in the browser.
+- **Exports:** workspace state can be exported as JSON. The demo store can be reset from Settings.
 
-All data are synthetic. The demo never sends network probes, scans targets, executes exploits, collects credentials, queries external OSINT, connects to Tor/I2P, or launches agents.
+## Demo-only behavior
 
-## Navigation and concept workflow
+All target entries, observations, task execution, feed updates, telemetry, map markers and findings are synthetic. The demo does not send network probes, scan hosts, execute exploits, collect credentials, query external OSINT, connect to Tor/I2P, or launch agents. "Run simulation" advances a local demo task through a synthetic lifecycle and produces a mock outcome only.
 
-The sidebar uses collapsible parent groups with nested workspace routes. The same navigation registry is exposed through `window.DevilEyeNavigation` so future modules can register under a parent group instead of adding one-off menu code. The Concept Library reads `concept/manifest.json`; adding an image file and a manifest entry adds it to the gallery automatically. See `docs/WORKSPACE-NAVIGATION.md`.
+There is intentionally **no production scope gate** in the demo. Add, edit, inspect and remove sample targets freely. This does not grant or imply authorization for real-world testing; no real target interaction exists in this build.
 
-## Demo backend
+## Local backend vs GitHub Pages
 
-See `docs/DEMO-BACKEND.md`. The local server uses Node built-in modules and binds to loopback by default. GitHub Pages cannot run Node.js; its frontend falls back to browser localStorage and labels that mode in the header.
+- `npm run demo`: local Node.js API with persistent JSON state in `server/data/demo-state.json`.
+- GitHub Pages: static frontend using a browser-localStorage demo adapter. Pages cannot host the Node.js API, so data is local to that browser/profile.
 
-## Map and visual references
+Both modes expose the same UI behavior and label the active demo mode in the header.
 
-The original concept references are organized unchanged in `concept/0.png` through `concept/18.png`; browse them through **Concept Library**. The world map SVG was generated from Natural Earth 1:110m country boundaries, CC0 1.0; see `assets/WORLD-MAP-SOURCE.txt`.
+## Concepts, map and architecture
 
-## Build
+The original concept references are stored unchanged in `concept/0.png` through `concept/18.png`. Browse them through **Concept Library**. New images are added through `concept/manifest.json`.
+
+The gray world political map is a local SVG generated from Natural Earth 1:110m country boundaries; license and source details are in `assets/WORLD-MAP-SOURCE.txt`.
+
+The sidebar and future module integration process is documented in `docs/WORKSPACE-NAVIGATION.md`. Demo UI control coverage is in `docs/DEMO-INTERACTIONS.md`; API behavior is in `docs/DEMO-BACKEND.md`.
+
+## Build and tests
 
 ```bash
+npm run check
 npm run build
+npm run smoke
 ```
 
-GitHub Actions creates the static Pages artifact at https://devilcoders.github.io/R-D/. Pages serves only the frontend; the local Node API runs only when you start `npm run demo`.
+GitHub Actions runs syntax checks, Tailwind CSS v4 build, backend/browser-adapter smoke tests, concept asset checks and then deploys the static application to:
 
-## Production boundary
+**https://devilcoders.github.io/R-D/**
 
-The frontend is a presentation/control layer. Authentication, scope enforcement, approvals, agent isolation, execution, evidence integrity and production audit must be implemented by trusted backend services. See `docs/FRONTEND-BOUNDARIES.md`.
+## Future production integration
+
+The frontend is deliberately an interactive demo boundary. Later, production business logic can be moved into Rust, C++, Python or other services behind versioned API contracts. The real backend must own identity, real authorization, scope enforcement, approvals, execution isolation, evidence integrity and production audit. Those are future engineering tasks, not simulated capabilities hidden behind this demo.
 
 **DEVIL EYE — Intelligence before action.**

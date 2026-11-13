@@ -15,7 +15,7 @@ Current parent groups:
 - System
 - Reference Library (registered by the Concept Library feature)
 
-Expansion state is persisted in `localStorage` under `rd-nav-expanded`. The group containing the active page is always expanded.
+Expansion state is persisted in `localStorage` under `rd-nav-expanded`. The workspace selector in the sidebar also opens a demo workspace menu; its chosen label is stored under `rd-demo-workspace`. Groups open by default. The operator can collapse any group—including the group containing the current page—and the selection is persisted in localStorage. The active child remains marked when its group is reopened.
 
 ## Register a future workspace group
 
