@@ -334,7 +334,7 @@
     if(osintSearch)osintSearch.addEventListener("click",()=>runOSINTSearch());
     if(osintQuery)osintQuery.addEventListener("keydown",e=>{if(e.key==="Enter")runOSINTSearch();});
     $$(".graph-node").forEach(node=>node.addEventListener("click",()=>inspectNode(node)));
-    $( 'input[name="autonomy"]' ).forEach(input=>input.addEventListener("change",()=>{
+    $$( 'input[name="autonomy"]' ).forEach(input=>input.addEventListener("change",()=>{
       const label=input.nextElementSibling.querySelector("b").textContent;
       localStorage.setItem("rd-demo-autonomy",input.value);
       showToast("Demo autonomy mode: "+label);
@@ -428,7 +428,7 @@
   function updateWorkspaceChoice(value,silent){
     const label=$("#workspace-environment"),menu=$("#workspace-switcher-menu"),toggle=$("#workspace-switcher");
     if(label)label.textContent=value.toUpperCase();
-    if(menu)$("[data-workspace-choice]",menu).forEach(item=>item.classList.toggle("selected",item.dataset.workspaceChoice===value));
+    if(menu)$$("[data-workspace-choice]",menu).forEach(item=>item.classList.toggle("selected",item.dataset.workspaceChoice===value));
     if(toggle)toggle.setAttribute("aria-expanded","false");
     if(menu)menu.hidden=true;
     localStorage.setItem("rd-demo-workspace",value);
