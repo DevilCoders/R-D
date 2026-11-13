@@ -35,7 +35,7 @@ try{
   const manifest=JSON.parse(await readFile("concept/manifest.json","utf8"));
   assert.match(appSource,/function iconFor/);
   assert.match(appSource,/nav-group-toggle/);
-  assert.match(appSource,/registerGroup\\(group\\)/);
+  assert.ok(appSource.includes("registerGroup(group)"));
   assert.match(uiSource,/demo-global-actions/);
   assert.match(uiSource,/sourceMatchers/);
   assert.match(uiSource,/data-record-delete/);
