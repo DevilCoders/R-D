@@ -334,7 +334,12 @@
     if(osintSearch)osintSearch.addEventListener("click",()=>runOSINTSearch());
     if(osintQuery)osintQuery.addEventListener("keydown",e=>{if(e.key==="Enter")runOSINTSearch();});
     $$(".graph-node").forEach(node=>node.addEventListener("click",()=>inspectNode(node)));
-    $$('input[name="autonomy"]').forEach(input=>input.addEventListener("change",()=>showToast("Demo autonomy mode: "+input.nextElementSibling.querySelector("b").textContent)));
+    $('input[name="autonomy"]').forEach(input=>input.addEventListener("change",()=>{
+      const label=input.nextElementSibling.querySelector("b").textContent;
+      localStorage.setItem("rd-demo-autonomy",input.value);
+      showToast("Demo autonomy mode: "+label);
+      if(window.DevilEyeDemoAPI)window.DevilEyeDemoAPI.addAudit("AUTONOMY_MODE_CHANGED",label).catch(()=>{});
+    }));
     $$("[data-pref]").forEach(input=>input.addEventListener("change",savePrefs));
   }
   function runOSINTSearch(){
