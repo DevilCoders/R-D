@@ -112,16 +112,17 @@ function insertWorkspace(){
  }
 }
 function ensureFilters(){
- const ws=$("#workspace");if(!ws)return;
- const tableBox=$(".table-wrap",ws);if(!tableBox)return;
- let row=$(".demo-filter-row",ws);
- if(!row){
-  row=document.createElement("div");row.className="demo-filter-row";
-  row.innerHTML="<button class='demo-filter-chip active' data-demo-filter='ALL'>All</button><button class='demo-filter-chip' data-demo-filter='verified'>Verified</button><button class='demo-filter-chip' data-demo-filter='review'>Review</button><button class='demo-filter-chip' data-demo-filter='high'>High / critical</button><span class='demo-count'></span>";
-  const parent=tableBox.closest(".panel-card")||tableBox.parentElement;
-  const search=parent&&$(".search-toolbar",parent);
-  if(search)search.insertAdjacentElement("afterend",row);else tableBox.insertAdjacentElement("beforebegin",row);
- }
+ const ws=$("#workspace");if(!ws)return null;
+ let row=$(".demo-filter-row",ws);if(row)return row;
+ const cards=$$(".panel-card",ws);
+ const panel=cards.find(card=>$("[data-local-search]",card)||$("#osint-query",card)||$("#osint-submit",card)||$(".table-wrap",card));
+ if(!panel)return null;
+ row=document.createElement("div");row.className="demo-filter-row";
+ row.innerHTML="<button class='demo-filter-chip active' data-demo-filter='ALL'>All</button><button class='demo-filter-chip' data-demo-filter='verified'>Verified</button><button class='demo-filter-chip' data-demo-filter='review'>Review</button><button class='demo-filter-chip' data-demo-filter='high'>High / critical</button><span class='demo-count'></span>";
+ const anchor=$(".source-filters",panel)||$(".search-toolbar",panel)||$(".prominent-search",panel)||$(".table-wrap",panel);
+ if(anchor)anchor.insertAdjacentElement(anchor.classList.contains("table-wrap")?"beforebegin":"afterend",row);
+ else panel.append(row);
+ return row;
 }
 function applyFilters(){
  const ws=$("#workspace");if(!ws)return;
@@ -259,7 +260,7 @@ async function exportState(){const st=await api().state();const data={notice:"SY
 async function updateBadge(){const b=$("#demo-api-badge");if(!b)return;const s=await api().probe();b.classList.toggle("offline",!s.online);b.innerHTML="<i></i>"+(s.online?"LOCAL NODE DEMO API":"BROWSER LOCAL DEMO");}
 async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-action],[data-demo-open],[data-demo-close],[data-demo-submit],[data-demo-filter],[data-demo-port],[data-demo-review],[data-demo-decision],[data-demo-cancel],[data-concept-index],[data-map-point],[data-demo-entity],[data-demo-copy],[data-source-filter],[data-action],[data-toast],[data-record-review],[data-record-delete],[data-record-open],[data-demo-run-task],#osint-submit,[data-page],[data-top-page],[data-nav-toggle]");if(!b)return;
  if(b.id==="osint-submit"){e.preventDefault();e.stopImmediatePropagation();const input=$("#osint-query");query=input?input.value.trim():"";statusFilter="ALL";applyFilters();const matches=$$("#workspace tbody tr").filter(r=>!r.classList.contains("hidden-row")).length;logDemoEvent("OSINT_SEARCH_EXECUTED","Local synthetic search / "+(query||"empty query"));toast(matches+" matching local sample records. No external request was sent.");return;}
- if(b.dataset.action){e.preventDefault();e.stopImmediatePropagation();if(b.dataset.action==="demo-run"){openTaskDialog();return;}if(b.dataset.action==="add-target"){const modal=$("#target-modal");if(modal){modal.classList.add("open");modal.setAttribute("aria-hidden","false");$("#target-value")?.focus();}return;}if(b.dataset.action==="export"){exportState();return;}if(b.dataset.action==="filter"){ensureFilters();const row=$(".demo-filter-row",$("#workspace"));if(row){row.hidden=!row.hidden;toast(row.hidden?"Filters hidden.":"Filters expanded.");}return;}if(b.dataset.action==="refresh"){await api().state();await renderQueue();await renderDemoRecords();await renderLiveLog();toast("Demo workspace refreshed.");return;}}
+ if(b.dataset.action){e.preventDefault();e.stopImmediatePropagation();if(b.dataset.action==="demo-run"){openTaskDialog();return;}if(b.dataset.action==="add-target"){const modal=$("#target-modal");if(modal){modal.classList.add("open");modal.setAttribute("aria-hidden","false");$("#target-value")?.focus();}return;}if(b.dataset.action==="export"){exportState();return;}if(b.dataset.action==="filter"){const existing=$(".demo-filter-row",$("#workspace"));const row=existing||ensureFilters();if(row){row.hidden=existing?!row.hidden:false;toast(row.hidden?"Filters hidden.":"Filters expanded.");}return;}if(b.dataset.action==="refresh"){await api().state();await renderQueue();await renderDemoRecords();await renderLiveLog();toast("Demo workspace refreshed.");return;}}
  if(b.dataset.toast&&b.dataset.toast.includes("Panel menu")){e.preventDefault();e.stopImmediatePropagation();openDialog("Panel actions","<p class='demo-concept-note'>Actions apply to the current workspace's synthetic sample records.</p><div class='demo-card-grid'><button class='demo-small-button' data-demo-action='add-record'>＋ Add observation</button><button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='export'>⇩ Export state</button></div>");return;}
  if(b.dataset.recordReview){try{await api().updateRecord(b.dataset.recordReview,{status:"Reviewed — demo"});await renderDemoRecords();toast("Demo record marked reviewed.");}catch(err){toast(err.message);}return;}
  if(b.dataset.recordOpen){
@@ -288,12 +289,12 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
  if(b.dataset.demoAction==="create-task"){e.preventDefault();openTaskDialog();return;}
  if(b.dataset.demoAction==="export"){e.preventDefault();exportState();return;}
  if(b.dataset.demoAction==="refresh"){e.preventDefault();await api().state();await renderQueue();await renderDemoRecords();await renderLiveLog();toast("Workspace refreshed from the active demo store.");return;}
- if(b.dataset.demoAction==="toggle-filters"){e.preventDefault();ensureFilters();const row=$(".demo-filter-row",$("#workspace"));if(row){row.hidden=!row.hidden;toast(row.hidden?"Filters hidden.":"Filters expanded.");}return;}
+ if(b.dataset.demoAction==="toggle-filters"){e.preventDefault();const existing=$(".demo-filter-row",$("#workspace"));const row=existing||ensureFilters();if(row){row.hidden=existing?!row.hidden:false;toast(row.hidden?"Filters hidden.":"Filters expanded.");}return;}
  if(b.dataset.demoAction==="live-log"){e.preventDefault();showAudit();return;}
  if(b.dataset.demoAction==="reset"){e.preventDefault();if(confirm("Reset all synthetic demo state in the active demo store?")){await api().reset();localStorage.removeItem("rd-demo-targets");await renderQueue();await renderDemoRecords();await renderLiveLog();const route=current();if(route!=="concept-library"){const nav=$("#sidebar-groups [data-page='"+route+"']");if(nav)nav.click();}toast("Demo state reset.");}return;}
  if(b.dataset.demoSubmit){e.preventDefault();const form=b.dataset.demoSubmit==="record"?$("#demo-record-form"):$("#demo-task-form");if(!form||!form.reportValidity())return;const data=Object.fromEntries(new FormData(form).entries());try{if(b.dataset.demoSubmit==="record")await api().addRecord(Object.assign({module:current()},data));else await api().createTask(data);closeDialog();await api().addAudit("DEMO_WORKSPACE_UPDATED",current());await renderQueue();await renderDemoRecords();toast("Saved to demo store. No external action was performed.");}catch(err){toast(err.message);}return;}
  if(b.dataset.demoFilter){statusFilter=b.dataset.demoFilter;$$("[data-demo-filter]").forEach(x=>x.classList.toggle("active",x===b));applyFilters();return;}
- if(b.hasAttribute("data-source-filter")){const all=$$("[data-source-filter]");all.forEach(x=>x.classList.toggle("selected",x===b));const t=b.textContent.trim().toLowerCase();sourceFilter=/all sources/.test(t)?"all":/social/.test(t)?"social":/news/.test(t)?"news":/forum/.test(t)?"forums":/technical/.test(t)?"technical":/web pages/.test(t)?"web":"public";applyFilters();logDemoEvent("OSINT_SOURCE_FILTERED",sourceFilter+" / "+b.textContent.trim());toast(sourceFilter==="all"?"Showing all local OSINT sources.":"Filtered OSINT demo sources: "+b.textContent.trim());return;}
+ if(b.hasAttribute("data-source-filter")){e.preventDefault();e.stopImmediatePropagation();const all=$("[data-source-filter]");all.forEach(x=>x.classList.toggle("selected",x===b));const t=b.textContent.trim().toLowerCase();sourceFilter=/all sources/.test(t)?"all":/social/.test(t)?"social":/news/.test(t)?"news":/forum/.test(t)?"forums":/technical/.test(t)?"technical":/web pages/.test(t)?"web":"public";applyFilters();logDemoEvent("OSINT_SOURCE_FILTERED",sourceFilter+" / "+b.textContent.trim());toast(sourceFilter==="all"?"Showing all local OSINT sources.":"Filtered OSINT demo sources: "+b.textContent.trim());return;}
  if(b.dataset.demoPort){const p=b.dataset.demoPort,box=$("#demo-port-info");if(box)box.innerHTML="<div class='demo-inspector'><span class='eyebrow'>PORT "+p+" / SYNTHETIC OBSERVATION</span><h4>"+([80,443,8080,8443].includes(+p)?"Sample service observed":"Reference port selected")+"</h4><p>Illustrative service metadata only. No packet or socket activity occurred.</p></div>";return;}
  if(b.dataset.demoReview){
   const label=b.dataset.demoReview;

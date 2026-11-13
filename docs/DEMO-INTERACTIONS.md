@@ -23,7 +23,7 @@ Every workspace uses the shared demo action rail and the live synthetic event st
 | Add target | Opens a form and adds a synthetic target record. No real target is contacted. |
 | Add observation | Adds a synthetic workspace record. |
 | Create task | Opens a task form and adds a task to the workflow queue. |
-| Filters | Shows/hides reusable All, Verified, Review and High/Critical chips for the workspace table. |
+| Filters | First click creates and shows reusable All, Verified, Review and High/Critical chips. Later clicks toggle them. Works with both standard workspace search and the dedicated OSINT search card. |
 | Live log | Opens the full synthetic audit/event log. |
 | Export | Downloads current demo state as JSON. |
 | Refresh | Re-reads the demo store and refreshes the task queue, records and event stream. |

@@ -61,6 +61,8 @@ try{
   assert.ok(uiSource.includes("function ensureLiveLog"));
   assert.ok(uiSource.includes("DEMO_TELEMETRY_PULSE"));
   assert.ok(uiSource.includes("sourceMatchers"));
+  assert.ok(uiSource.includes("const existing=$(\".demo-filter-row\",$(\"#workspace\"));const row=existing||ensureFilters();"));
+  assert.ok(uiSource.includes("const panel=cards.find(card=>$(\"[data-local-search]\",card)||$(\"#osint-query\",card)"));
   assert.ok(uiSource.includes("data-record-delete"));
   assert.ok(uiSource.includes("data-demo-run-task"));
   assert.ok(adapterSource.includes("async function runTask"));
