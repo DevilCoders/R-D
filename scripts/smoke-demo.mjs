@@ -42,13 +42,13 @@ try{
   assert.ok(appSource.includes("nav-group-toggle"));
   assert.ok(appSource.includes("registerGroup(group)"));
   assert.ok(appSource.includes("function globalSearchEntries"));
-  assert.ok(appSource.includes("$( 'input[name=\"autonomy\"]' ).forEach"));
-  assert.ok(appSource.includes('$("[data-workspace-choice]",menu).forEach'));
-  assert.ok(uiSource.includes('const all=$("[data-source-filter]");all.forEach'));
+  assert.ok(appSource.includes("$$( 'input[name=\"autonomy\"]' ).forEach"));
+  assert.ok(appSource.includes('$$("[data-workspace-choice]",menu).forEach'));
+  assert.ok(uiSource.includes('const all=$$("[data-source-filter]");all.forEach'));
   assert.ok(appSource.includes('window.addEventListener("keydown"'));
   assert.ok(appSource.includes('e.code==="NumpadDivide"'));
-  assert.ok(!appSource.includes("$('input[name=\"autonomy\"]').forEach"));
-  assert.ok(!appSource.includes('$("[data-workspace-choice]",menu).forEach'));
+  assert.ok(appSource.includes("$$( 'input[name=\"autonomy\"]' ).forEach"));
+  assert.ok(appSource.includes('$$("[data-workspace-choice]",menu).forEach'));
 
   assert.ok(appSource.includes('e.code==="Slash"'));
   const compiledCss=await readFile("assets/app.css","utf8");
