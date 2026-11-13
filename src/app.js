@@ -392,11 +392,16 @@
     box.hidden=false;$("#global-search").setAttribute("aria-expanded","true");
   }
   function selectGlobalSearchResult(button){
-    const id=button.dataset.globalResult,query=button.dataset.globalQuery||"";
+    const id=button.dataset.globalResult,query=button.dataset.globalQuery||"",kind=button.dataset.globalKind;
     closeGlobalSearch();
-    if(button.dataset.globalKind==="SAMPLE RECORD"||button.dataset.globalKind==="SEARCH"){
+    if(kind==="SAMPLE RECORD"){
+      navigate(id);
+      const field=id==="osint-search"?$("#osint-query"):$("#workspace [data-local-search]");
+      if(field){field.value=query;field.dispatchEvent(new Event("input",{bubbles:true}));}
+      if(id==="osint-search")$("#osint-submit")?.click();
+    }else if(kind==="SEARCH"){
       navigate("osint-search");
-      const field=$("#osint-query");if(field){field.value=query;runOSINTSearch();}
+      const field=$("#osint-query");if(field){field.value=query;$("#osint-submit")?.click();}
     }else navigate(id);
     $("#global-search").value="";
   }
@@ -462,7 +467,7 @@
     document.addEventListener("keydown",e=>{
       const tag=(document.activeElement&&document.activeElement.tagName)||"";
       const editing=["INPUT","TEXTAREA","SELECT"].includes(tag)||document.activeElement?.isContentEditable;
-      if((e.key==="/"&&!editing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k")){
+      if(((e.key==="/"||e.code==="Slash")&&!editing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k")){
         e.preventDefault();$("#global-search").focus();renderGlobalSearch($("#global-search").value);
       }
       if(e.key==="Escape"){closeTargetModal();closeMobileNav();closeWorkspaceMenu();closeGlobalSearch();}

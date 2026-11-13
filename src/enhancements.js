@@ -79,6 +79,7 @@ async function renderConceptLibrary(){
  ws.innerHTML="<div class='workspace-hero'><div><span class='section-kicker'>VISUAL SPECIFICATION / "+items.length+" ORIGINAL REFERENCES</span><h2>Concept <span class='text-gradient'>library.</span></h2><p>Concept assets load from concept/manifest.json. New entries appear here when added to the manifest.</p></div><span class='demo-stamp'>"+items.length+" CONCEPTS / LOCAL ASSETS</span></div>"+
  "<p class='demo-concept-note'>Select a card for a full-resolution preview. Original image files remain in the concept/ directory.</p><div class='demo-concept-grid'>"+cards+"</div>";
  $("#workspace-scroll").scrollTop=0;
+ ensureLiveLog();
  if(window.DevilEyeNavigation)window.DevilEyeNavigation.openGroup("reference-library");
 }
 function insertWorkspace(){
@@ -267,7 +268,16 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
   }catch(err){toast(err.message);}return;
  }
  if(b.dataset.recordDelete){
-  if(confirm("Delete this synthetic demo record?")){try{await api().deleteRecord(b.dataset.recordDelete);await renderDemoRecords();toast("Demo record deleted.");}catch(err){toast(err.message);}}return;
+  if(confirm("Delete this synthetic demo record?")){try{
+   const state=await api().state(),record=(state.records||[]).find(x=>x.id===b.dataset.recordDelete);
+   await api().deleteRecord(b.dataset.recordDelete);
+   if(record&&record.module==="targets"){
+    const stored=JSON.parse(localStorage.getItem("rd-demo-targets")||"[]").filter(x=>x.value!==record.title);
+    localStorage.setItem("rd-demo-targets",JSON.stringify(stored));
+    const nav=$("#sidebar-groups [data-page='targets']");if(nav)nav.click();
+   }
+   await renderDemoRecords();await renderLiveLog();toast("Demo record deleted.");
+  }catch(err){toast(err.message);}}return;
  }
 
  if(b.hasAttribute("data-demo-close")){closeDialog();return;}
@@ -280,7 +290,7 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
  if(b.dataset.demoAction==="refresh"){e.preventDefault();await api().state();await renderQueue();await renderDemoRecords();await renderLiveLog();toast("Workspace refreshed from the active demo store.");return;}
  if(b.dataset.demoAction==="toggle-filters"){e.preventDefault();ensureFilters();const row=$(".demo-filter-row",$("#workspace"));if(row){row.hidden=!row.hidden;toast(row.hidden?"Filters hidden.":"Filters expanded.");}return;}
  if(b.dataset.demoAction==="live-log"){e.preventDefault();showAudit();return;}
- if(b.dataset.demoAction==="reset"){e.preventDefault();if(confirm("Reset all synthetic demo state in the active demo store?")){await api().reset();await renderQueue();await renderLiveLog();toast("Demo state reset.");}return;}
+ if(b.dataset.demoAction==="reset"){e.preventDefault();if(confirm("Reset all synthetic demo state in the active demo store?")){await api().reset();localStorage.removeItem("rd-demo-targets");await renderQueue();await renderDemoRecords();await renderLiveLog();const route=current();if(route!=="concept-library"){const nav=$("#sidebar-groups [data-page='"+route+"']");if(nav)nav.click();}toast("Demo state reset.");}return;}
  if(b.dataset.demoSubmit){e.preventDefault();const form=b.dataset.demoSubmit==="record"?$("#demo-record-form"):$("#demo-task-form");if(!form||!form.reportValidity())return;const data=Object.fromEntries(new FormData(form).entries());try{if(b.dataset.demoSubmit==="record")await api().addRecord(Object.assign({module:current()},data));else await api().createTask(data);closeDialog();await api().addAudit("DEMO_WORKSPACE_UPDATED",current());await renderQueue();await renderDemoRecords();toast("Saved to demo store. No external action was performed.");}catch(err){toast(err.message);}return;}
  if(b.dataset.demoFilter){statusFilter=b.dataset.demoFilter;$$("[data-demo-filter]").forEach(x=>x.classList.toggle("active",x===b));applyFilters();return;}
  if(b.hasAttribute("data-source-filter")){const all=$$("[data-source-filter]");all.forEach(x=>x.classList.toggle("selected",x===b));const t=b.textContent.trim().toLowerCase();sourceFilter=/all sources/.test(t)?"all":/social/.test(t)?"social":/news/.test(t)?"news":/forum/.test(t)?"forums":/technical/.test(t)?"technical":/web pages/.test(t)?"web":"public";applyFilters();logDemoEvent("OSINT_SOURCE_FILTERED",sourceFilter+" / "+b.textContent.trim());toast(sourceFilter==="all"?"Showing all local OSINT sources.":"Filtered OSINT demo sources: "+b.textContent.trim());return;}
@@ -311,6 +321,7 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
 }
 async function onSubmit(e){if(e.target.id==="target-form"){e.preventDefault();e.stopImmediatePropagation();const value=$("#target-value").value.trim(),type=$("#target-type").value;if(!value){toast("Enter a target label or address.");return;}try{await api().addRecord({module:"targets",title:value,category:type,status:"In demo scope",authorized:true,notes:"Synthetic demo target record."});const old=JSON.parse(localStorage.getItem("rd-demo-targets")||"[]");old.unshift({value,type,createdAt:new Date().toISOString()});localStorage.setItem("rd-demo-targets",JSON.stringify(old.slice(0,30)));$("#target-modal").classList.remove("open");e.target.reset();await renderDemoRecords();await renderLiveLog();toast("Demo target added. No network connection was made.");}catch(err){toast(err.message);}return;}}
 function init(){const overlay=document.createElement("div");overlay.id="demo-overlay";overlay.className="demo-overlay";overlay.setAttribute("aria-hidden","true");document.body.append(overlay);
+ $("#demo-overlay").addEventListener("click",e=>{if(e.target.id==="demo-overlay")closeDialog();});
  const ws=$("#workspace");if(ws)new MutationObserver(()=>{if(current()!=="concept-library")currentBind();}).observe(ws,{childList:true});
  const side=$("#sidebar-groups");if(side)new MutationObserver(addSidebar).observe(side,{childList:true});
  document.addEventListener("click",e=>{const control=e.target.closest("button,a,[role='button'],.graph-node,.world-map-point");if(control)logButtonInteraction(control);},true);
