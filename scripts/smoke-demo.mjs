@@ -48,6 +48,10 @@ try{
   assert.ok(appSource.includes("function selectGlobalSearchResult"));
   assert.ok(indexSource.includes("workspace-switcher-menu"));
   assert.ok(indexSource.includes("global-search-results"));
+  assert.ok(appSource.includes("function positionGlobalSearch"));
+  assert.ok(appSource.includes('document.body.appendChild(globalResults)'));
+  assert.ok(appSource.includes('window.addEventListener("resize"'));
+  assert.ok(uiSource===uiSource);
   assert.ok(!indexSource.includes("target-authorized"));
   assert.ok(uiSource.includes("function ensureLiveLog"));
   assert.ok(uiSource.includes("DEMO_TELEMETRY_PULSE"));
