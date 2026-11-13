@@ -91,7 +91,7 @@ function insertWorkspace(){
    ? "<button class='demo-small-button' data-demo-action='add-target'>＋ Add target</button>"
    : "<button class='demo-small-button' data-demo-action='add-record'>＋ Add observation</button>";
   rail.innerHTML="<div class='demo-rail-copy'><b>WORKSPACE CONTROLS</b> <span> / synthetic demo state</span></div><div class='demo-rail-actions'>"+primary+
-   "<button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='export'>⇩ Export</button><button class='demo-small-button' data-demo-action='refresh'>↻ Refresh</button></div>";
+   "<button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='toggle-filters'>☷ Filters</button><button class='demo-small-button' data-demo-action='live-log'>◉ Live log</button><button class='demo-small-button' data-demo-action='export'>⇩ Export</button><button class='demo-small-button' data-demo-action='refresh'>↻ Refresh</button></div>";
   const anchor=$(".workspace-hero",ws)||$(".osint-banner",ws)||ws.firstElementChild;
   if(anchor)anchor.insertAdjacentElement("afterend",rail);else ws.prepend(rail);
  }
@@ -102,6 +102,7 @@ function insertWorkspace(){
   if(anchor)anchor.insertAdjacentElement("afterend",block);else ws.prepend(block);
  }
  if(id==="operations")renderQueue();
+ ensureLiveLog();
  renderDemoRecords();
  if(id==="settings"&&!$("[data-demo-action='reset']",ws)){
   const card=document.createElement("section");card.className="panel-card";
@@ -109,7 +110,18 @@ function insertWorkspace(){
   ws.append(card);
  }
 }
-function ensureFilters(){const ws=$("#workspace");if(!ws||$(".demo-filter-row",ws))return;const p=$$(".panel-card",ws).find(x=>$("[data-local-search]",x));if(!p)return;const bar=document.createElement("div");bar.className="demo-filter-row";bar.innerHTML="<button class='demo-filter-chip active' data-demo-filter='ALL'>All</button><button class='demo-filter-chip' data-demo-filter='verified'>Verified</button><button class='demo-filter-chip' data-demo-filter='review'>Review</button><button class='demo-filter-chip' data-demo-filter='high'>High / critical</button><span class='demo-count'></span>";const t=$(".table-wrap",p);if(t)p.insertBefore(bar,t);}
+function ensureFilters(){
+ const ws=$("#workspace");if(!ws)return;
+ const tableBox=$(".table-wrap",ws);if(!tableBox)return;
+ let row=$(".demo-filter-row",ws);
+ if(!row){
+  row=document.createElement("div");row.className="demo-filter-row";
+  row.innerHTML="<button class='demo-filter-chip active' data-demo-filter='ALL'>All</button><button class='demo-filter-chip' data-demo-filter='verified'>Verified</button><button class='demo-filter-chip' data-demo-filter='review'>Review</button><button class='demo-filter-chip' data-demo-filter='high'>High / critical</button><span class='demo-count'></span>";
+  const parent=tableBox.closest(".panel-card")||tableBox.parentElement;
+  const search=parent&&$(".search-toolbar",parent);
+  if(search)search.insertAdjacentElement("afterend",row);else tableBox.insertAdjacentElement("beforebegin",row);
+ }
+}
 function applyFilters(){
  const ws=$("#workspace");if(!ws)return;
  const rows=$$("tbody tr",ws);
@@ -161,6 +173,52 @@ function bindInteractiveSurfaces(){
   el.setAttribute("tabindex","0");
   el.setAttribute("aria-label","Inspect demo item: "+label);
  });
+}
+function ensureLiveLog(){
+ const ws=$("#workspace");if(!ws||$(".demo-live-log",ws))return;
+ const panel=document.createElement("section");panel.className="panel-card demo-live-log";
+ panel.innerHTML="<div class='panel-heading'><div><span class='panel-kicker'>SYSTEM TELEMETRY / SYNTHETIC</span><h3>Live event stream</h3></div><div class='demo-live-heading-actions'><span class='live-badge'><i></i> LIVE / DEMO</span><button type='button' class='demo-small-button' data-demo-open='audit'>Full log ↗</button></div></div><div class='demo-live-log-list' id='demo-live-log-list'><div class='demo-empty'>Connecting to local demo event stream…</div></div>";
+ ws.append(panel);
+ renderLiveLog();
+}
+async function renderLiveLog(){
+ const list=$("#demo-live-log-list");if(!list||!api())return;
+ try{
+  const state=await api().state(),items=(state.audit||[]).slice(0,8);
+  list.innerHTML=items.map(item=>{
+   const stamp=new Date(item.at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+   const action=esc(item.action||"DEMO_EVENT"),detail=esc(item.detail||"Synthetic event");
+   return "<div class='demo-live-event'><time>"+stamp+"</time><span class='demo-live-dot'></span><div><b>"+action+"</b><small>"+detail+"</small></div><span class='demo-live-origin'>"+esc(item.origin||"DEMO")+"</span></div>";
+  }).join("")||"<div class='demo-empty'>No events yet. Interact with the demo workspace to generate events.</div>";
+ }catch(err){list.innerHTML="<div class='demo-empty'>Live log unavailable: "+esc(err.message)+"</div>";}
+}
+async function logDemoEvent(action,detail){
+ if(!api())return;
+ try{await api().addAudit(action,detail);await renderLiveLog();}catch(_){}
+}
+function logButtonInteraction(element){
+ if(!element||element.closest(".demo-live-log"))return;
+ const label=(element.getAttribute("aria-label")||element.dataset.action||element.dataset.demoAction||element.textContent||element.getAttribute("title")||"Control").replace(/\s+/g," ").trim().slice(0,100);
+ if(!label)return;
+ logDemoEvent("UI_INTERACTION",current()+" / "+label);
+}
+function startDemoTelemetry(){
+ if(window.__devilEyeDemoTelemetryStarted)return;
+ window.__devilEyeDemoTelemetryStarted=true;
+ const pulses=[
+  ["GLOBAL_VIEW","Synthetic dashboard telemetry refreshed"],
+  ["RECON","Synthetic discovery queue heartbeat"],
+  ["OSINT","Synthetic public-source index heartbeat"],
+  ["VULNERABILITY","Synthetic advisory catalogue heartbeat"],
+  ["OPERATIONS","Synthetic workflow scheduler heartbeat"],
+  ["INTELLIGENCE","Synthetic correlation engine heartbeat"]
+ ];
+ let cursor=0;
+ logDemoEvent("DEMO_SESSION_STARTED","Interactive synthetic session initialized");
+ window.__devilEyeTelemetryTimer=setInterval(()=>{
+  const event=pulses[cursor%pulses.length];cursor++;
+  logDemoEvent("DEMO_TELEMETRY_PULSE",event[0]+" / "+event[1]);
+ },12000);
 }
 function currentBind(){
  if(current()==="concept-library")return;
