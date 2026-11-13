@@ -116,7 +116,7 @@
         '</button>'+
         '<div class="nav-children" data-nav-children="'+safe(group.id)+'" '+(expanded?"":"hidden")+'>'+
           group.items.map(item=>{
-            const isActive=activePage===item[0],isDemo=item[3]==="demo";
+            const isActive=activePage===item[0] || (item[3]==="demo" && location.hash.slice(1)===item[0]),isDemo=item[3]==="demo";
             const targetAttr=isDemo?' data-demo-page="'+safe(item[0])+'"':' data-page="'+safe(item[0])+'"';
             return '<button type="button" class="side-link '+(isActive?"active":"")+'"'+targetAttr+' aria-current="'+(isActive?"page":"false")+'">'+
               '<span class="side-icon">'+iconFor(item[2])+'</span><span>'+safe(item[1])+'</span>'+
@@ -400,14 +400,14 @@
     }else navigate(id);
     $("#global-search").value="";
   }
-  function updateWorkspaceChoice(value){
+  function updateWorkspaceChoice(value,silent){
     const label=$("#workspace-environment"),menu=$("#workspace-switcher-menu"),toggle=$("#workspace-switcher");
     if(label)label.textContent=value.toUpperCase();
     if(menu)$("[data-workspace-choice]",menu).forEach(item=>item.classList.toggle("selected",item.dataset.workspaceChoice===value));
     if(toggle)toggle.setAttribute("aria-expanded","false");
     if(menu)menu.hidden=true;
     localStorage.setItem("rd-demo-workspace",value);
-    showToast("Workspace switched to "+value+" · demo environment.");
+    if(!silent)showToast("Workspace switched to "+value+" · demo environment.");
     if(window.DevilEyeDemoAPI)window.DevilEyeDemoAPI.addAudit("WORKSPACE_SWITCHED",value).catch(()=>{});
   }
   function closeWorkspaceMenu(){
@@ -455,7 +455,7 @@
     workspaceToggle.addEventListener("click",()=>{const open=workspaceMenu.hidden;workspaceMenu.hidden=!open;workspaceToggle.setAttribute("aria-expanded",String(open));workspaceToggle.classList.toggle("open",open);});
     workspaceMenu.addEventListener("click",e=>{const item=e.target.closest("[data-workspace-choice]");if(item)updateWorkspaceChoice(item.dataset.workspaceChoice);});
     const storedWorkspace=localStorage.getItem("rd-demo-workspace")||"Research Environment";
-    updateWorkspaceChoice(storedWorkspace);
+    updateWorkspaceChoice(storedWorkspace,true);
     closeWorkspaceMenu();
     $("#sidebar").addEventListener("click",e=>{const b=e.target.closest("[data-toast]");if(b)showToast(b.dataset.toast);});
     document.addEventListener("click",e=>{const b=e.target.closest("[data-toast]");if(b)showToast(b.dataset.toast);});
