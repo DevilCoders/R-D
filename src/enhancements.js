@@ -4,7 +4,7 @@
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const api=()=>window.DevilEyeDemoAPI,esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let conceptItems=null;
-let query="",statusFilter="ALL",lastDetail=null;
+let query="",statusFilter="ALL",sourceFilter="all",lastDetail=null;
 const modules={
 "operations":"<div class='demo-concept-note'>Approval state is local demo workflow only. No task triggers a scan, agent or external request.</div><div id='demo-task-queue' class='demo-viz-card'><div class='demo-viz-heading'><b>WORKFLOW QUEUE</b><span>LOADING</span></div><div class='demo-viz-body'></div></div>",
 "reconnaissance":"<div class='demo-card-grid'>"+["DNS & certificate context","Asset relationships","Change monitoring"].map((x,i)=>card("DISCOVERY / 0"+(i+1),x,"Passive sample observations")).join("")+"</div>",
@@ -81,9 +81,57 @@ async function renderConceptLibrary(){
  $("#workspace-scroll").scrollTop=0;
  if(window.DevilEyeNavigation)window.DevilEyeNavigation.openGroup("reference-library");
 }
-function insertWorkspace(){const id=current(),ws=$("#workspace");if(!ws)return;addSidebar();if(id==="concept-library"){renderConceptLibrary();return;}if(modules[id]&&!$(".demo-module-visual",ws)){const block=document.createElement("section");block.className="demo-module-visual";block.innerHTML="<div class='demo-rail'><div class='demo-rail-copy'><b>"+id.toUpperCase().replaceAll("-"," ")+"</b> <span> / interactive synthetic demo</span></div><div class='demo-rail-actions'><button class='demo-small-button' data-demo-action='add-record'>＋ Add observation</button><button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='export'>⇩ Export</button></div></div>"+modules[id];const anchor=$(".module-strip",ws)||$(".metric-grid",ws)||ws.firstElementChild;if(anchor)anchor.parentNode.insertBefore(block,anchor.nextSibling);else ws.prepend(block);}if(id==="operations")renderQueue();renderDemoRecords();if(id==="settings"&&!$("[data-demo-action='reset']",ws)){const card=document.createElement("section");card.className="panel-card";card.innerHTML="<div class='panel-heading'><div><span class='panel-kicker'>DEMO STATE</span><h3>Backend controls</h3></div></div><div style='padding:14px'><p class='demo-concept-note'>Reset clears synthetic demo records, task states and audit history from the active demo store.</p><button class='btn-secondary' data-demo-action='reset'>Reset demo state</button> <button class='btn-secondary' data-demo-open='audit'>View audit log</button></div>";ws.append(card);}}
+function insertWorkspace(){
+ const id=current(),ws=$("#workspace");if(!ws)return;
+ addSidebar();
+ if(id==="concept-library"){renderConceptLibrary();return;}
+ if(!$(".demo-global-actions",ws)){
+  const rail=document.createElement("div");rail.className="demo-rail demo-global-actions";
+  const primary=id==="targets"
+   ? "<button class='demo-small-button' data-demo-action='add-target'>＋ Add target</button>"
+   : "<button class='demo-small-button' data-demo-action='add-record'>＋ Add observation</button>";
+  rail.innerHTML="<div class='demo-rail-copy'><b>WORKSPACE CONTROLS</b> <span> / synthetic demo state</span></div><div class='demo-rail-actions'>"+primary+
+   "<button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='export'>⇩ Export</button><button class='demo-small-button' data-demo-action='refresh'>↻ Refresh</button></div>";
+  const anchor=$(".workspace-hero",ws)||$(".osint-banner",ws)||ws.firstElementChild;
+  if(anchor)anchor.insertAdjacentElement("afterend",rail);else ws.prepend(rail);
+ }
+ if(modules[id]&&!$(".demo-module-visual",ws)){
+  const block=document.createElement("section");block.className="demo-module-visual";
+  block.innerHTML=modules[id];
+  const anchor=$(".metric-grid",ws)||$(".module-strip",ws)||$(".demo-global-actions",ws)||ws.firstElementChild;
+  if(anchor)anchor.insertAdjacentElement("afterend",block);else ws.prepend(block);
+ }
+ if(id==="operations")renderQueue();
+ renderDemoRecords();
+ if(id==="settings"&&!$("[data-demo-action='reset']",ws)){
+  const card=document.createElement("section");card.className="panel-card";
+  card.innerHTML="<div class='panel-heading'><div><span class='panel-kicker'>DEMO STATE</span><h3>Backend controls</h3></div></div><div style='padding:14px'><p class='demo-concept-note'>Reset clears synthetic demo records, task states and audit history from the active demo store.</p><button class='btn-secondary' data-demo-action='reset'>Reset demo state</button> <button class='btn-secondary' data-demo-open='audit'>View audit log</button></div>";
+  ws.append(card);
+ }
+}
 function ensureFilters(){const ws=$("#workspace");if(!ws||$(".demo-filter-row",ws))return;const p=$$(".panel-card",ws).find(x=>$("[data-local-search]",x));if(!p)return;const bar=document.createElement("div");bar.className="demo-filter-row";bar.innerHTML="<button class='demo-filter-chip active' data-demo-filter='ALL'>All</button><button class='demo-filter-chip' data-demo-filter='verified'>Verified</button><button class='demo-filter-chip' data-demo-filter='review'>Review</button><button class='demo-filter-chip' data-demo-filter='high'>High / critical</button><span class='demo-count'></span>";const t=$(".table-wrap",p);if(t)p.insertBefore(bar,t);}
-function applyFilters(){const ws=$("#workspace");if(!ws)return;const rows=$$("tbody tr",ws);rows.forEach(r=>{const text=r.textContent.toLowerCase(),status=$$("td",r).slice(-1)[0]?.textContent.toLowerCase()||"";r.classList.toggle("hidden-row",!(!query||text.includes(query.toLowerCase()))||!(statusFilter==="ALL"||status.includes(statusFilter)));});const c=$(".demo-count",ws);if(c)c.textContent=rows.filter(r=>!r.classList.contains("hidden-row")).length+" / "+rows.length+" VISIBLE";}
+function applyFilters(){
+ const ws=$("#workspace");if(!ws)return;
+ const rows=$$("tbody tr",ws);
+ const sourceMatchers={
+  web:/official website|web page|website|public webpage/i,
+  social:/social media|public profile|social post/i,
+  news:/news & media|news report|press release|media bulletin/i,
+  forums:/forums|forum thread|discussion board/i,
+  public:/public records|corporate filing|public registry/i,
+  technical:/technical source|repository|dns|certificate|code reference/i
+ };
+ rows.forEach(row=>{
+  const text=row.textContent.toLowerCase();
+  const type=$$("td",row)[2]?.textContent||"";
+  const matchesQuery=!query||text.includes(query.toLowerCase());
+  const matchesStatus=statusFilter==="ALL"||text.includes(statusFilter.toLowerCase());
+  const matchesSource=current()!=="osint-search"||sourceFilter==="all"||!!(sourceMatchers[sourceFilter]&&sourceMatchers[sourceFilter].test(type));
+  row.classList.toggle("hidden-row",!(matchesQuery&&matchesStatus&&matchesSource));
+ });
+ const c=$(".demo-count",ws);
+ if(c)c.textContent=rows.filter(r=>!r.classList.contains("hidden-row")).length+" / "+rows.length+" VISIBLE";
+}
 function currentBind(){if(current()==="concept-library")return;insertWorkspace();ensureFilters();const q=$("[data-local-search]");if(q&&!q.dataset.demoBound){q.dataset.demoBound="1";q.addEventListener("input",()=>{query=q.value;applyFilters();});}}
 async function renderQueue(){const box=$("#demo-task-queue");if(!box||!api())return;try{const st=await api().state(),items=st.tasks||[];const rows=items.map(t=>"<div class='demo-audit-item'><code>"+esc(t.id)+"</code><span><b>"+esc(t.title)+"</b><br><small>"+esc(t.module||"operations")+" · "+esc(t.execution||"SIMULATED / NO EXTERNAL ACTION")+"</small><br><span class='demo-status "+(/Approved/.test(t.state)?"approved":/Rejected|Cancelled/.test(t.state)?"rejected":"pending")+"'>"+esc(t.state)+"</span></span><span>"+(t.state==="Awaiting approval"?"<button class='demo-small-button' data-demo-decision='approve' data-task='"+esc(t.id)+"'>Approve demo</button> <button class='demo-small-button' data-demo-decision='reject' data-task='"+esc(t.id)+"'>Reject</button>":"")+(t.state!=="Cancelled"&&t.state!=="Rejected"?" <button class='demo-small-button' data-demo-cancel='"+esc(t.id)+"'>Cancel</button>":"")+"</span></div>").join("");box.innerHTML="<div class='demo-viz-heading'><b>WORKFLOW QUEUE / "+items.length+" TASKS</b><span>"+api().mode()+"</span></div><div class='demo-viz-body'>"+(rows||"<div class='demo-empty'>No demo tasks yet.</div>")+"</div>";}catch(e){toast(e.message);}}
 async function renderDemoRecords(){
@@ -111,13 +159,15 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
  if(b.hasAttribute("data-demo-close")){closeDialog();return;}
  if(b.dataset.demoPage){e.preventDefault();history.replaceState({page:"concept-library"},"","#concept-library");renderConceptLibrary();return;}
  if(b.dataset.demoOpen==="audit"){e.preventDefault();showAudit();return;}
- if(b.dataset.demoAction==="add-record"){e.preventDefault();openRecordDialog();return;}
+ if(b.dataset.demoAction==="add-target"){e.preventDefault();const modal=$("#target-modal");if(modal){modal.classList.add("open");modal.setAttribute("aria-hidden","false");$("#target-value")?.focus();}return;}
+ if(b.dataset.demoAction==="add-record"){e.preventDefault();if(current()==="targets"){const modal=$("#target-modal");if(modal){modal.classList.add("open");modal.setAttribute("aria-hidden","false");$("#target-value")?.focus();}}else openRecordDialog();return;}
  if(b.dataset.demoAction==="create-task"){e.preventDefault();openTaskDialog();return;}
  if(b.dataset.demoAction==="export"){e.preventDefault();exportState();return;}
+ if(b.dataset.demoAction==="refresh"){e.preventDefault();await api().state();await renderQueue();await renderDemoRecords();toast("Workspace refreshed from the active demo store.");return;}
  if(b.dataset.demoAction==="reset"){e.preventDefault();if(confirm("Reset all synthetic demo state in the active demo store?")){await api().reset();await renderQueue();toast("Demo state reset.");}return;}
  if(b.dataset.demoSubmit){e.preventDefault();const form=b.dataset.demoSubmit==="record"?$("#demo-record-form"):$("#demo-task-form");if(!form||!form.reportValidity())return;const data=Object.fromEntries(new FormData(form).entries());try{if(b.dataset.demoSubmit==="record")await api().addRecord(Object.assign({module:current()},data));else await api().createTask(data);closeDialog();await api().addAudit("DEMO_WORKSPACE_UPDATED",current());await renderQueue();await renderDemoRecords();toast("Saved to demo store. No external action was performed.");}catch(err){toast(err.message);}return;}
  if(b.dataset.demoFilter){statusFilter=b.dataset.demoFilter;$$("[data-demo-filter]").forEach(x=>x.classList.toggle("active",x===b));applyFilters();return;}
- if(b.hasAttribute("data-source-filter")){const all=$$("[data-source-filter]");all.forEach(x=>x.classList.toggle("selected",x===b));const t=b.textContent.toLowerCase();query=/all sources/.test(t)?"":/social/.test(t)?"social":/news/.test(t)?"news":/forum/.test(t)?"forum":/technical/.test(t)?"technical":/web pages/.test(t)?"web":"public";applyFilters();return;}
+ if(b.hasAttribute("data-source-filter")){const all=$("[data-source-filter]");all.forEach(x=>x.classList.toggle("selected",x===b));const t=b.textContent.trim().toLowerCase();sourceFilter=/all sources/.test(t)?"all":/social/.test(t)?"social":/news/.test(t)?"news":/forum/.test(t)?"forums":/technical/.test(t)?"technical":/web pages/.test(t)?"web":"public";applyFilters();toast(sourceFilter==="all"?"Showing all local OSINT sources.":"Filtered OSINT demo sources: "+b.textContent.trim());return;}
  if(b.dataset.demoPort){const p=b.dataset.demoPort,box=$("#demo-port-info");if(box)box.innerHTML="<div class='demo-inspector'><span class='eyebrow'>PORT "+p+" / SYNTHETIC OBSERVATION</span><h4>"+([80,443,8080,8443].includes(+p)?"Sample service observed":"Reference port selected")+"</h4><p>Illustrative service metadata only. No packet or socket activity occurred.</p></div>";return;}
  if(b.dataset.demoReview){await api().addAudit("DEMO_REVIEW_OPENED",b.dataset.demoReview);toast("Opened sample review: "+b.dataset.demoReview);return;}
  if(b.dataset.demoDecision){try{await api().decideTask(b.dataset.task,b.dataset.demoDecision);await renderQueue();toast("Demo task updated. No execution was triggered.");}catch(err){toast(err.message);}return;}
@@ -139,7 +189,7 @@ function init(){const overlay=document.createElement("div");overlay.id="demo-ove
  const side=$("#sidebar-groups");if(side)new MutationObserver(addSidebar).observe(side,{childList:true});
  document.addEventListener("click",onClick,true);document.addEventListener("submit",onSubmit,true);
  document.addEventListener("click",e=>{const r=e.target.closest("#workspace tbody tr");if(r&&!e.target.closest("button,a,input,select"))detail(r);});
- document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDialog();if(e.key==="Enter"&&e.target.id==="osint-query"){e.preventDefault();e.stopImmediatePropagation();query=e.target.value;statusFilter="ALL";applyFilters();toast("Filtered local sample records. No external search was sent.");}if(e.key==="Enter"&&e.target.id==="global-search"){e.preventDefault();const value=e.target.value.trim();if(value){const link=$("[data-page='osint-search']");if(link)link.click();setTimeout(()=>{const q=$("#osint-query");if(q){q.value=value;query=value;applyFilters();}},120);e.target.value="";}}},true);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDialog();if(e.key==="Enter"&&e.target.id==="osint-query"){e.preventDefault();e.stopImmediatePropagation();query=e.target.value;statusFilter="ALL";applyFilters();toast("Filtered local sample records. No external search was sent.");}if(e.key==="Enter"&&e.target.id==="global-search"){e.preventDefault();e.stopImmediatePropagation();const value=e.target.value.trim();if(value){const link=$("[data-page='osint-search']");if(link)link.click();setTimeout(()=>{const q=$("#osint-query");if(q){q.value=value;query=value;applyFilters();}},120);e.target.value="";}}},true);
  document.addEventListener("input",e=>{if(e.target.matches("[data-local-search]")){query=e.target.value;applyFilters();}});
  const g=$("#global-search");if(g)g.addEventListener("keydown",e=>{if(e.key==="Enter")e.stopImmediatePropagation();},true);
  addSidebar();if(current()==="concept-library")renderConceptLibrary();else currentBind();updateBadge();
