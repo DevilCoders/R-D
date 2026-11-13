@@ -28,6 +28,12 @@ async function api(req,res,url){
   if(r.module==="targets"&&!r.authorized)return send(res,403,{message:"Explicit authorization confirmation is required for demo scope records"});
   db.records.unshift(r);log("DEMO_RECORD_CREATED",r.module+": "+r.title);await save();return send(res,201,r);
  }
+ if(req.method==="DELETE"&&route.startsWith("records/")){
+  const id=decodeURIComponent(route.slice(8)),index=db.records.findIndex(x=>x.id===id);
+  if(index<0)return send(res,404,{message:"Demo record not found"});
+  const removed=db.records.splice(index,1)[0];
+  log("DEMO_RECORD_DELETED",id);await save();return send(res,200,{ok:true,record:removed});
+ }
  if(req.method==="PATCH"&&route.startsWith("records/")){
   const id=decodeURIComponent(route.slice(8)),r=db.records.find(x=>x.id===id);if(!r)return send(res,404,{message:"Demo record not found"});
   const v=await readBody(req);if(v.status)r.status=clean(v.status,64);if(v.notes!==undefined)r.notes=clean(v.notes,1200);r.updatedAt=new Date().toISOString();log("DEMO_RECORD_UPDATED",id);await save();return send(res,200,r);
