@@ -3,6 +3,7 @@ import net from "node:net";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
+import { URL } from "node:url";
 
 const probe=net.createServer();
 await new Promise((resolve,reject)=>{probe.once("error",reject);probe.listen(0,"127.0.0.1",resolve);});
@@ -144,7 +145,7 @@ try{
     removeItem:key=>store.delete(key)
   };
   const sandbox={
-    window:{},localStorage,document:{baseURI:"https://demo.invalid/"},URL,
+    window:{},localStorage,document:{baseURI:"https://demo.invalid/"},URL,URL,
     fetch:async()=>{throw new TypeError("offline for fallback test");}
   };
   vm.runInNewContext(adapterSource,sandbox,{filename:"src/demo-api.js"});
