@@ -30,6 +30,10 @@ Open **http://127.0.0.1:4174**. This builds the Tailwind CSS v4 frontend and sta
 
 All data are synthetic. The demo never sends network probes, scans targets, executes exploits, collects credentials, queries external OSINT, connects to Tor/I2P, or launches agents.
 
+## Navigation and concept workflow
+
+The sidebar uses collapsible parent groups with nested workspace routes. The same navigation registry is exposed through `window.DevilEyeNavigation` so future modules can register under a parent group instead of adding one-off menu code. The Concept Library reads `concept/manifest.json`; adding an image file and a manifest entry adds it to the gallery automatically. See `docs/WORKSPACE-NAVIGATION.md`.
+
 ## Demo backend
 
 See `docs/DEMO-BACKEND.md`. The local server uses Node built-in modules and binds to loopback by default. GitHub Pages cannot run Node.js; its frontend falls back to browser localStorage and labels that mode in the header.
