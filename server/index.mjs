@@ -23,9 +23,8 @@ async function api(req,res,url){
  if(req.method==="GET"&&route==="tasks")return send(res,200,{items:db.tasks});
  if(req.method==="GET"&&route==="records"){const module=url.searchParams.get("module");return send(res,200,{items:module?db.records.filter(x=>x.module===module):db.records});}
  if(req.method==="POST"&&route==="records"){
-  const v=await readBody(req),r={id:"REC-"+crypto.randomUUID().slice(0,10).toUpperCase(),module:clean(v.module,80),title:clean(v.title,180),category:clean(v.category,100),status:clean(v.status||"Needs review",64),notes:clean(v.notes,1200),source:clean(v.source||"Operator-entered demo record",180),authorized:v.authorized===true,createdAt:new Date().toISOString(),origin:"SYNTHETIC DEMO"};
+  const v=await readBody(req),r={id:"REC-"+crypto.randomUUID().slice(0,10).toUpperCase(),module:clean(v.module,80),title:clean(v.title,180),category:clean(v.category,100),status:clean(v.status||"Needs review",64),notes:clean(v.notes,1200),source:clean(v.source||"Operator-entered demo record",180),authorized:true,createdAt:new Date().toISOString(),origin:"SYNTHETIC DEMO"};
   if(!r.title||!r.module)return send(res,400,{message:"module and title are required"});
-  if(r.module==="targets"&&!r.authorized)return send(res,403,{message:"Explicit authorization confirmation is required for demo scope records"});
   db.records.unshift(r);log("DEMO_RECORD_CREATED",r.module+": "+r.title);await save();return send(res,201,r);
  }
  if(req.method==="DELETE"&&route.startsWith("records/")){
@@ -42,6 +41,17 @@ async function api(req,res,url){
   const v=await readBody(req),t={id:"TASK-"+crypto.randomUUID().slice(0,8).toUpperCase(),module:clean(v.module||"operations",80),title:clean(v.title,180),description:clean(v.description,900),state:"Awaiting approval",mode:"SIMULATED",approvalRequired:true,createdAt:new Date().toISOString(),execution:"SIMULATION ONLY — no scanner, exploit, network, credential, or external service is invoked"};
   if(!t.title)return send(res,400,{message:"Task title is required"});
   db.tasks.unshift(t);db.approvals.unshift({id:"APR-"+t.id,taskId:t.id,state:"Pending",createdAt:t.createdAt});log("DEMO_TASK_CREATED",t.title);await save();return send(res,201,t);
+ }
+ if(req.method==="POST"&&route.startsWith("tasks/")&&route.endsWith("/run")){
+  const id=decodeURIComponent(route.split("/")[1]),t=db.tasks.find(x=>x.id===id);
+  if(!t)return send(res,404,{message:"Task not found"});
+  if(!/Approved/.test(t.state))return send(res,409,{message:"Approve this demo task before running its simulation"});
+  t.state="Running — demo";t.startedAt=new Date().toISOString();
+  t.progress=[{stage:"Prepare synthetic context",state:"completed"},{stage:"Process sample records",state:"completed"},{stage:"Generate demo output",state:"completed"}];
+  log("DEMO_TASK_STARTED",id);await new Promise(resolve=>setTimeout(resolve,350));
+  t.result="Synthetic workflow completed. No target, network, scanner, exploit, credential, or external service was contacted.";
+  t.state="Completed — demo";t.completedAt=new Date().toISOString();
+  log("DEMO_TASK_COMPLETED",id);await save();return send(res,200,t);
  }
  if(req.method==="POST"&&route.startsWith("tasks/")&&route.endsWith("/decision")){
   const id=decodeURIComponent(route.split("/")[1]),v=await readBody(req);if(!["approve","reject"].includes(v.decision))return send(res,400,{message:"decision must be approve or reject"});
