@@ -492,7 +492,7 @@
     window.addEventListener("scroll",()=>{if(globalResults&&!globalResults.hidden)positionGlobalSearch();},true);
     const userToggle=$("#sidebar-user-menu-toggle"),userMenu=$("#sidebar-user-menu");
     userToggle.addEventListener("click",()=>{const open=userMenu.hidden;userMenu.hidden=!open;userToggle.setAttribute("aria-expanded",String(open));});
-    userMenu.addEventListener("click",e=>{if(e.target.closest("button")){userMenu.hidden=true;userToggle.setAttribute("aria-expanded","false");}});
+    userMenu.addEventListener("click",e=>{const button=e.target.closest("button");if(!button)return;if(button.dataset.page)navigate(button.dataset.page);userMenu.hidden=true;userToggle.setAttribute("aria-expanded","false");});
     const workspaceToggle=$("#workspace-switcher"),workspaceMenu=$("#workspace-switcher-menu");
     workspaceToggle.addEventListener("click",()=>{const open=workspaceMenu.hidden;workspaceMenu.hidden=!open;workspaceToggle.setAttribute("aria-expanded",String(open));workspaceToggle.classList.toggle("open",open);});
     workspaceMenu.addEventListener("click",e=>{const item=e.target.closest("[data-workspace-choice]");if(item)updateWorkspaceChoice(item.dataset.workspaceChoice);});

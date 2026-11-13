@@ -8,8 +8,10 @@ Every workspace uses the shared demo action rail and the live synthetic event st
 |---|---|
 | Sidebar group header / chevron | Expand or collapse its child routes. Explicit collapsed state is preserved, even for the active route. |
 | Workspace selector arrow | Opens a menu for Research Environment, Red Team Lab, OSINT Research, Threat Intelligence and Evidence Review. |
+| Sidebar user menu (···) | Opens Settings, the full Audit Log or Reset Demo State. |
+| Global search result list | Use Arrow Up/Down, Home/End and Enter; Escape closes the palette. The `/` and `Ctrl+K` shortcuts open it.
 | Top navigation | Routes to Global View, Targets, Operations, Intelligence and Threat Feed. |
-| Search field | Type to see workspace and sample-record suggestions. Select a result to navigate. |
+| Search field | Type to see workspace and sample-record suggestions. Select a result to navigate. The command palette floats over the header and is styled in the compiled `assets/app.css`. |
 | `/` and `Ctrl+K` | Focus the global command search and open quick destinations. |
 | Clock / status badge | Updates locally and reports whether local Node API or browser-local demo mode is active. |
 | Mobile menu button / scrim | Opens or closes the responsive sidebar. |
