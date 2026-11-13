@@ -254,14 +254,14 @@ function init(){const overlay=document.createElement("div");overlay.id="demo-ove
  const side=$("#sidebar-groups");if(side)new MutationObserver(addSidebar).observe(side,{childList:true});
  document.addEventListener("click",onClick,true);document.addEventListener("submit",onSubmit,true);
  document.addEventListener("click",e=>{const r=e.target.closest("#workspace tbody tr");if(r&&!e.target.closest("button,a,input,select"))detail(r);});
- document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDialog();if(e.key==="Enter"&&e.target.id==="osint-query"){e.preventDefault();e.stopImmediatePropagation();query=e.target.value;statusFilter="ALL";applyFilters();toast("Filtered local sample records. No external search was sent.");}if(e.key==="Enter"&&e.target.id==="global-search"){e.preventDefault();e.stopImmediatePropagation();const value=e.target.value.trim();if(value){const link=$("[data-page='osint-search']");if(link)link.click();setTimeout(()=>{const q=$("#osint-query");if(q){q.value=value;query=value;applyFilters();}},120);e.target.value="";}}},true);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDialog();if(e.key==="Enter"&&e.target.id==="osint-query"){e.preventDefault();e.stopImmediatePropagation();query=e.target.value;statusFilter="ALL";applyFilters();toast("Filtered local sample records. No external search was sent.");}},true);
  document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ") && e.target.matches('[role="button"][data-demo-surface]')){
    e.preventDefault();e.target.click();
   }
  });
  document.addEventListener("input",e=>{if(e.target.matches("[data-local-search]")){query=e.target.value;applyFilters();}});
- const g=$("#global-search");if(g)g.addEventListener("keydown",e=>{if(e.key==="Enter")e.stopImmediatePropagation();},true);
+ 
  addSidebar();if(current()==="concept-library")renderConceptLibrary();else currentBind();updateBadge();
 }
 window.addEventListener("hashchange",()=>{if(current()==="concept-library")renderConceptLibrary();else currentBind();});
