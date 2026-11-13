@@ -18,6 +18,8 @@ The server listens on 127.0.0.1:4174 by default and serves the generated `dist/`
 | GET | `/api/records?module=...` | List demo observations |
 | POST | `/api/records` | Add demo observation; scope records require confirmation |
 | PATCH | `/api/records/:id` | Update status or notes |
+| DELETE | `/api/records/:id` | Delete a demo record and append an audit event |
+| DELETE | `/api/records/:id` | Delete a demo record and append an audit event |
 | GET | `/api/tasks` | List demo tasks |
 | POST | `/api/tasks` | Create an approval-gated simulated task |
 | POST | `/api/tasks/:id/decision` | Approve or reject a simulation |
