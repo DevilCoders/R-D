@@ -334,7 +334,7 @@
     if(osintSearch)osintSearch.addEventListener("click",()=>runOSINTSearch());
     if(osintQuery)osintQuery.addEventListener("keydown",e=>{if(e.key==="Enter")runOSINTSearch();});
     $$(".graph-node").forEach(node=>node.addEventListener("click",()=>inspectNode(node)));
-    $('input[name="autonomy"]').forEach(input=>input.addEventListener("change",()=>{
+    $( 'input[name="autonomy"]' ).forEach(input=>input.addEventListener("change",()=>{
       const label=input.nextElementSibling.querySelector("b").textContent;
       localStorage.setItem("rd-demo-autonomy",input.value);
       showToast("Demo autonomy mode: "+label);
@@ -501,14 +501,24 @@
     closeWorkspaceMenu();
     $("#sidebar").addEventListener("click",e=>{const b=e.target.closest("[data-toast]");if(b)showToast(b.dataset.toast);});
     document.addEventListener("click",e=>{const b=e.target.closest("[data-toast]");if(b)showToast(b.dataset.toast);});
-    document.addEventListener("keydown",e=>{
-      const tag=(document.activeElement&&document.activeElement.tagName)||"";
-      const editing=["INPUT","TEXTAREA","SELECT"].includes(tag)||document.activeElement?.isContentEditable;
-      if(((e.key==="/"||e.code==="Slash")&&!editing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k")){
-        e.preventDefault();$("#global-search").focus();renderGlobalSearch($("#global-search").value);
+    window.addEventListener("keydown",e=>{
+      const target=e.target;
+      const tag=(target&&target.tagName)||"";
+      const editing=["INPUT","TEXTAREA","SELECT"].includes(tag)||!!target?.isContentEditable;
+      const slashShortcut=e.key==="/"||e.key==="?"||e.code==="Slash"||e.code==="NumpadDivide";
+      const commandShortcut=(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k";
+      if((slashShortcut&&!editing)||commandShortcut){
+        e.preventDefault();
+        const input=$("#global-search");
+        if(input){input.focus();renderGlobalSearch(input.value);}
       }
-      if(e.key==="Escape"){closeTargetModal();closeMobileNav();closeWorkspaceMenu();closeGlobalSearch();const userMenu=$("#sidebar-user-menu"),userToggle=$("#sidebar-user-menu-toggle");if(userMenu)userMenu.hidden=true;if(userToggle)userToggle.setAttribute("aria-expanded","false");}
-    });
+      if(e.key==="Escape"){
+        closeTargetModal();closeMobileNav();closeWorkspaceMenu();closeGlobalSearch();
+        const userMenu=$("#sidebar-user-menu"),userToggle=$("#sidebar-user-menu-toggle");
+        if(userMenu)userMenu.hidden=true;
+        if(userToggle)userToggle.setAttribute("aria-expanded","false");
+      }
+    },true);
     document.addEventListener("click",e=>{
       if(!e.target.closest(".global-search-wrap, #global-search-results"))closeGlobalSearch();
       if(!e.target.closest(".sidebar-workspace-wrap"))closeWorkspaceMenu();if(!e.target.closest(".sidebar-user")){const userMenu=$("#sidebar-user-menu"),userToggle=$("#sidebar-user-menu-toggle");if(userMenu)userMenu.hidden=true;if(userToggle)userToggle.setAttribute("aria-expanded","false");}
