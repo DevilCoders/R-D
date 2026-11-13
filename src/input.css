@@ -346,7 +346,7 @@ tbody tr:hover td { background: #151e29; }
 .global-search-result:hover,.global-search-result:focus-visible{border-color:#74404b!important;background:linear-gradient(90deg,#291720,#151d27)!important;outline:0;box-shadow:inset 2px 0 #e34c60}
 .global-search-result-icon{width:27px;height:27px;display:grid;place-items:center;border:1px solid #50333e;border-radius:4px;color:#f17382;background:#21141b;font-size:14px}
 .global-search-result>span:nth-child(2){display:flex;min-width:0;flex-direction:column;gap:4px}
-.global-search-result b{display:block;overflow:hidden;color:#e4ebf2;font:600 10px var(--sans);text-overflow:ellipsis;white-space:nowrap}
+.global-search-result b{display:block;overflow:hidden;color:#e4ebf2;font:600 10px var(--font-sans);text-overflow:ellipsis;white-space:nowrap}
 .global-search-result small{display:block;overflow:hidden;color:#7f90a3;font:8px var(--mono);text-overflow:ellipsis;white-space:nowrap}
 .global-search-result kbd{padding:4px 6px;border:1px solid #354454;border-radius:3px;color:#8191a2;background:#101720;font:7px var(--mono);letter-spacing:.05em}
 .global-search-all{margin-top:5px!important;border-top:1px solid #2c3948!important;padding-top:11px!important}
