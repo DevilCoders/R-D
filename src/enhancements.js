@@ -28,7 +28,7 @@ const modules={
 "knowledge-base":"<div class='demo-card-grid'>"+["ATT&CK references","CVE / NVD records","CWE taxonomy","Vendor advisories","Internal research","Evidence catalogue"].map(x=>card("KNOWLEDGE COLLECTION",x,"Versioned sample reference")).join("")+"</div>",
 "reports":"<div class='demo-card-grid'>"+["Assessment report","Evidence manifest","Approval history"].map(x=>card("REPORT PACKAGE",x,"Exportable sample records")).join("")+"</div>"
 };
-function card(k,t,d){return "<div class='demo-info-card'><small>"+k+"</small><strong>"+t+"</strong><span>"+d+"</span></div>";}
+function card(k,t,d){return "<button type='button' class='demo-info-card demo-info-button' data-demo-review='"+esc(t)+"'><small>"+esc(k)+"</small><strong>"+esc(t)+"</strong><span>"+esc(d)+"</span></button>";}
 function kv(k,v){return "<div class='demo-kv'><span>"+k+"</span><b>"+v+"</b></div>";}
 function bar(n,v){return "<div class='demo-bar-row'><span>"+n+"</span><div class='demo-bar-track'><div class='demo-bar-fill' style='width:"+v+"%'></div></div><b>"+v+"%</b></div>";}
 function sourceCards(items){return "<div class='demo-card-grid'>"+items.map((x,i)=>card("CURATED SOURCE / 0"+(i+1),x,"Catalogue entry · provenance retained")).join("")+"</div>";}
