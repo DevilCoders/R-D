@@ -28,7 +28,7 @@
       <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span></button>
       <nav class="top-nav" id="top-nav" aria-label="Primary workspaces"></nav>
       <div class="topbar-right">
-        <label class="global-search"><span>⌕</span><input id="global-search" type="search" placeholder="Search workspace…" aria-label="Search workspace"><kbd>/</kbd></label>
+        <div class="global-search-wrap"><label class="global-search"><span>⌕</span><input id="global-search" type="search" placeholder="Search workspace…" aria-label="Search workspace" autocomplete="off" aria-expanded="false" aria-controls="global-search-results"><kbd>/</kbd></label><div id="global-search-results" class="global-search-results" hidden></div></div>
         <span id="demo-api-badge" class="demo-api-badge offline"><i></i> CHECKING DEMO API</span>
         <div class="system-status"><i></i><span><b>SYSTEM ONLINE</b><small>DEMO ENVIRONMENT</small></span></div>
         <div class="clock-block"><strong id="system-clock">--:--:--</strong><small>LOCAL TIME</small></div>
@@ -37,7 +37,7 @@
     </header>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-scroll">
-        <div class="sidebar-workspace"><span class="workspace-avatar">D</span><span><b>DEVIL EYE</b><small>RESEARCH ENVIRONMENT</small></span><span class="workspace-chevron">⌄</span></div>
+        <div class="sidebar-workspace-wrap"><button class="sidebar-workspace" id="workspace-switcher" type="button" aria-haspopup="menu" aria-expanded="false"><span class="workspace-avatar">D</span><span><b>DEVIL EYE</b><small id="workspace-environment">RESEARCH ENVIRONMENT</small></span><span class="workspace-chevron">⌄</span></button><div class="workspace-switcher-menu" id="workspace-switcher-menu" role="menu" hidden><div class="workspace-menu-title">SWITCH DEMO WORKSPACE</div><button type="button" role="menuitem" data-workspace-choice="Research Environment">Research Environment</button><button type="button" role="menuitem" data-workspace-choice="Red Team Lab">Red Team Lab</button><button type="button" role="menuitem" data-workspace-choice="OSINT Research">OSINT Research</button><button type="button" role="menuitem" data-workspace-choice="Threat Intelligence">Threat Intelligence</button><button type="button" role="menuitem" data-workspace-choice="Evidence Review">Evidence Review</button></div></div>
         <div id="sidebar-groups"></div>
       </div>
       <div class="sidebar-footer">
@@ -57,11 +57,11 @@
   <div class="modal-backdrop" id="target-modal" aria-hidden="true">
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-heading"><div><span class="section-kicker">SCOPE REGISTRY / LOCAL DEMO</span><h2 id="modal-title">Add approved asset</h2></div><button id="modal-close" class="icon-button" type="button" aria-label="Close dialog">×</button></div>
-      <p class="modal-description">This adds a synthetic scope record to the demo registry. It does not contact the asset or initiate reconnaissance.</p>
+      <p class="modal-description">Adds a synthetic target entry to this demo workspace. No network connection, scan, or external request is made.</p>
       <form id="target-form">
         <label class="form-field">Asset identifier<input id="target-value" type="text" maxlength="180" required placeholder="example.test or 192.0.2.10"></label>
         <label class="form-field">Asset type<select id="target-type"><option>Domain</option><option>IP address</option><option>Network range</option><option>Application / API</option><option>Other</option></select></label>
-        <label class="authorization-check"><input id="target-authorized" type="checkbox"><span>I confirm this asset is explicitly authorized and within the written engagement scope.</span></label>
+        <p class="demo-modal-note">Demo-only target record. It is stored in the local synthetic workspace and never contacted.</p>
         <div class="modal-actions"><button class="btn-secondary" type="button" id="modal-cancel">Cancel</button><button class="btn-primary" type="submit">Save demo record ↗</button></div>
       </form>
     </section>

@@ -108,7 +108,7 @@
     const container=$("#sidebar-groups");
     container.innerHTML=navGroups.map(group=>{
       const hasActive=group.items.some(item=>activePage===item[0]);
-      const expanded=hasActive || navExpanded[group.id]!==false;
+      const expanded=navExpanded[group.id]===undefined ? true : navExpanded[group.id]===true;
       return '<section class="nav-group" data-nav-group="'+safe(group.id)+'">'+
         '<button type="button" class="nav-group-toggle" data-nav-toggle="'+safe(group.id)+'" aria-expanded="'+String(expanded)+'">'+
           '<span class="nav-group-icon">'+iconFor(group.icon)+'</span><span>'+safe(group.label)+'</span>'+
@@ -303,14 +303,17 @@
   function closeTargetModal(){
     $("#target-modal").classList.remove("open");$("#target-modal").setAttribute("aria-hidden","true");$("#target-form").reset();
   }
-  function saveTarget(e){
+  async function saveTarget(e){
     e.preventDefault();
     const value=$("#target-value").value.trim(),type=$("#target-type").value;
-    if(!$("#target-authorized").checked){showToast("Confirm written authorization before adding a local scope record.");return;}
-    if(!value||value.length>180||/\s/.test(value)){showToast("Enter a domain, IP address, or network identifier without spaces.");return;}
-    const entries=savedTargets();entries.unshift({value:value,type:type,createdAt:new Date().toISOString()});
-    localStorage.setItem("rd-demo-targets",JSON.stringify(entries.slice(0,30)));
-    closeTargetModal();navigate("targets");showToast("Asset saved to this browser's local demo scope. No connection was made.");
+    if(!value||value.length>180){showToast("Enter a target label or address (maximum 180 characters).");return;}
+    const item={value,type,createdAt:new Date().toISOString()};
+    const entries=savedTargets();entries.unshift(item);
+    localStorage.setItem("rd-demo-targets",JSON.stringify(entries.slice(0,100)));
+    try{
+      if(window.DevilEyeDemoAPI) await window.DevilEyeDemoAPI.addRecord({module:"targets",title:value,category:type,status:"In demo scope",authorized:true,notes:"Synthetic demo target record."});
+      closeTargetModal();navigate("targets");showToast("Demo target added. No network connection was made.");
+    }catch(err){showToast("Demo target could not be saved: "+err.message);}
   }
   function exportData(){
     const payload={notice:"SAMPLE DATA ONLY — not a real assessment result.",project:"DEVIL EYE / R&D",page:activePage,generatedAt:new Date().toISOString(),records:dataRows[activePage]||[]};
@@ -350,14 +353,67 @@
     localStorage.setItem("rd-demo-prefs",JSON.stringify(prefs));
     document.body.classList.toggle("compact-tables",!!prefs.compact);
     document.body.classList.toggle("reduced-motion",!prefs.motion);
+    document.body.classList.toggle("hide-demo-banners",prefs.demo===false);
     showToast("Interface preference saved locally.");
   }
   function action(name){
     if(name==="add-target"){openTargetModal();return;}
-    if(name==="refresh"){showToast("Workspace refreshed from local prototype state.");return;}
-    if(name==="demo-run"){showToast("Demo task created locally. No scan or network activity was started.");return;}
+    if(name==="refresh"){if(window.DevilEyeDemoAPI)window.DevilEyeDemoAPI.state().then(()=>showToast("Workspace state refreshed."));else showToast("Workspace refreshed.");return;}
+    if(name==="demo-run"){showToast("Use the demo task dialog to create a simulated workflow.");return;}
     if(name==="export"){exportData();return;}
-    if(name==="filter"){showToast("Advanced filtering UI is planned for this workspace.");return;}
+    if(name==="filter"){showToast("Use the filter controls in the workspace toolbar.");return;}
+  }
+  function closeGlobalSearch(){
+    const box=$("#global-search-results"),input=$("#global-search");
+    if(box){box.hidden=true;box.innerHTML="";}
+    if(input)input.setAttribute("aria-expanded","false");
+  }
+  function globalSearchEntries(query){
+    const q=String(query||"").trim().toLowerCase();
+    const routes=Object.keys(pages).map(id=>({kind:"WORKSPACE",id,title:pages[id][0],detail:pages[id][1]}));
+    const recordHits=[];
+    Object.entries(dataRows).forEach(([id,rows])=>rows.forEach(row=>{
+      const hay=row.join(" ").toLowerCase();
+      if(q && hay.includes(q))recordHits.push({kind:"SAMPLE RECORD",id,title:row[1]||row[0],detail:pages[id]?pages[id][0]+" · "+row[0]:id,query:q});
+    }));
+    const routeHits=routes.filter(x=>!q||(x.title+" "+x.detail+" "+x.id).toLowerCase().includes(q));
+    if(!q)return routeHits.slice(0,9);
+    return routeHits.slice(0,7).concat(recordHits.slice(0,5)).slice(0,10);
+  }
+  function renderGlobalSearch(query){
+    const box=$("#global-search-results");if(!box)return;
+    const items=globalSearchEntries(query);
+    const value=String(query||"").trim();
+    const header=value?"SEARCH RESULTS":"QUICK DESTINATIONS";
+    box.innerHTML="<div class='global-search-results-heading'>"+header+" <span>"+items.length+" MATCHES</span></div>"+
+      (items.map(item=>"<button type='button' class='global-search-result' data-global-result='"+safe(item.id)+"' data-global-kind='"+safe(item.kind)+"' data-global-query='"+safe(item.query||"")+"'><span class='global-search-result-icon'>"+(item.kind==="WORKSPACE"?"⌘":"⌕")+"</span><span><b>"+safe(item.title)+"</b><small>"+safe(item.detail)+"</small></span><kbd>"+(item.kind==="WORKSPACE"?"OPEN":"VIEW")+"</kbd></button>").join("")||
+      "<div class='global-search-empty'>No exact matches. Press Enter to search the local demo dataset.</div>")+
+      (value?"<button type='button' class='global-search-result global-search-all' data-global-result='osint-search' data-global-kind='SEARCH' data-global-query='"+safe(value)+"'><span class='global-search-result-icon'>⌕</span><span><b>Search all demo observations</b><small>Filter the local OSINT sample dataset for “"+safe(value)+"”.</small></span><kbd>ENTER</kbd></button>":"");
+    box.hidden=false;$("#global-search").setAttribute("aria-expanded","true");
+  }
+  function selectGlobalSearchResult(button){
+    const id=button.dataset.globalResult,query=button.dataset.globalQuery||"";
+    closeGlobalSearch();
+    if(button.dataset.globalKind==="SAMPLE RECORD"||button.dataset.globalKind==="SEARCH"){
+      navigate("osint-search");
+      const field=$("#osint-query");if(field){field.value=query;runOSINTSearch();}
+    }else navigate(id);
+    $("#global-search").value="";
+  }
+  function updateWorkspaceChoice(value){
+    const label=$("#workspace-environment"),menu=$("#workspace-switcher-menu"),toggle=$("#workspace-switcher");
+    if(label)label.textContent=value.toUpperCase();
+    if(menu)$("[data-workspace-choice]",menu).forEach(item=>item.classList.toggle("selected",item.dataset.workspaceChoice===value));
+    if(toggle)toggle.setAttribute("aria-expanded","false");
+    if(menu)menu.hidden=true;
+    localStorage.setItem("rd-demo-workspace",value);
+    showToast("Workspace switched to "+value+" · demo environment.");
+    if(window.DevilEyeDemoAPI)window.DevilEyeDemoAPI.addAudit("WORKSPACE_SWITCHED",value).catch(()=>{});
+  }
+  function closeWorkspaceMenu(){
+    const menu=$("#workspace-switcher-menu"),toggle=$("#workspace-switcher");
+    if(menu)menu.hidden=true;
+    if(toggle){toggle.setAttribute("aria-expanded","false");toggle.classList.remove("open");}
   }
   function init(){
     renderSidebar();renderPage(location.hash.slice(1)||"dashboard");
@@ -380,20 +436,47 @@
     $("#modal-close").addEventListener("click",closeTargetModal);
     $("#modal-cancel").addEventListener("click",closeTargetModal);
     $("#target-modal").addEventListener("click",e=>{if(e.target.id==="target-modal")closeTargetModal();});
-    $("#global-search").addEventListener("keydown",e=>{
-      if(e.key==="Enter"&&e.target.value.trim()){navigate("osint-search");$("#osint-query").value=e.target.value.trim();runOSINTSearch();e.target.value="";}
+    const globalInput=$("#global-search"),globalResults=$("#global-search-results");
+    globalInput.setAttribute("aria-expanded","false");
+    globalInput.addEventListener("focus",()=>renderGlobalSearch(globalInput.value));
+    globalInput.addEventListener("input",()=>renderGlobalSearch(globalInput.value));
+    globalInput.addEventListener("keydown",e=>{
+      if(e.key==="ArrowDown"){const first=$("[data-global-result]",globalResults);if(first){e.preventDefault();first.focus();}}
+      if(e.key==="Enter"){
+        e.preventDefault();
+        const first=$("[data-global-result]",globalResults);
+        if(first)selectGlobalSearchResult(first);
+        else if(globalInput.value.trim()){navigate("osint-search");const field=$("#osint-query");if(field){field.value=globalInput.value.trim();runOSINTSearch();}globalInput.value="";}
+      }
+      if(e.key==="Escape")closeGlobalSearch();
     });
+    globalResults.addEventListener("click",e=>{const button=e.target.closest("[data-global-result]");if(button)selectGlobalSearchResult(button);});
+    const workspaceToggle=$("#workspace-switcher"),workspaceMenu=$("#workspace-switcher-menu");
+    workspaceToggle.addEventListener("click",()=>{const open=workspaceMenu.hidden;workspaceMenu.hidden=!open;workspaceToggle.setAttribute("aria-expanded",String(open));workspaceToggle.classList.toggle("open",open);});
+    workspaceMenu.addEventListener("click",e=>{const item=e.target.closest("[data-workspace-choice]");if(item)updateWorkspaceChoice(item.dataset.workspaceChoice);});
+    const storedWorkspace=localStorage.getItem("rd-demo-workspace")||"Research Environment";
+    updateWorkspaceChoice(storedWorkspace);
+    closeWorkspaceMenu();
     $("#sidebar").addEventListener("click",e=>{const b=e.target.closest("[data-toast]");if(b)showToast(b.dataset.toast);});
     document.addEventListener("click",e=>{const b=e.target.closest("[data-toast]");if(b)showToast(b.dataset.toast);});
     document.addEventListener("keydown",e=>{
-      if(e.key==="/"&&!["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){e.preventDefault();$("#global-search").focus();}
-      if(e.key==="Escape"){closeTargetModal();closeMobileNav();}
+      const tag=(document.activeElement&&document.activeElement.tagName)||"";
+      const editing=["INPUT","TEXTAREA","SELECT"].includes(tag)||document.activeElement?.isContentEditable;
+      if((e.key==="/"&&!editing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k")){
+        e.preventDefault();$("#global-search").focus();renderGlobalSearch($("#global-search").value);
+      }
+      if(e.key==="Escape"){closeTargetModal();closeMobileNav();closeWorkspaceMenu();closeGlobalSearch();}
+    });
+    document.addEventListener("click",e=>{
+      if(!e.target.closest(".global-search-wrap"))closeGlobalSearch();
+      if(!e.target.closest(".sidebar-workspace-wrap"))closeWorkspaceMenu();
     });
     const clock=()=>$("#system-clock").textContent=new Intl.DateTimeFormat(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date());
     clock();setInterval(clock,1000);
     const prefs=JSON.parse(localStorage.getItem("rd-demo-prefs")||"{}");
     document.body.classList.toggle("compact-tables",!!prefs.compact);
     document.body.classList.toggle("reduced-motion",prefs.motion===false);
+    document.body.classList.toggle("hide-demo-banners",prefs.demo===false);
   }
   window.DevilEyeNavigation = {
     registerGroup(group){
