@@ -41,6 +41,11 @@ try{
   assert.ok(appSource.includes("registerGroup(group)"));
   assert.ok(appSource.includes("function globalSearchEntries"));
   assert.ok(appSource.includes('e.code==="Slash"'));
+  const compiledCss=await readFile("assets/app.css","utf8");
+  assert.ok(compiledCss.includes(".global-search-results{"));
+  assert.ok(compiledCss.includes("position:fixed!important"));
+  assert.ok(appSource.includes("function renderGlobalSearch"));
+  assert.ok(appSource.includes("function selectGlobalSearchResult"));
   assert.ok(indexSource.includes("workspace-switcher-menu"));
   assert.ok(indexSource.includes("global-search-results"));
   assert.ok(!indexSource.includes("target-authorized"));

@@ -390,8 +390,9 @@
     const items=globalSearchEntries(query);
     const value=String(query||"").trim();
     const header=value?"SEARCH RESULTS":"QUICK DESTINATIONS";
-    box.innerHTML="<div class='global-search-results-heading'>"+header+" <span>"+items.length+" MATCHES</span></div>"+
-      (items.map(item=>"<button type='button' class='global-search-result' data-global-result='"+safe(item.id)+"' data-global-kind='"+safe(item.kind)+"' data-global-query='"+safe(item.query||"")+"'><span class='global-search-result-icon'>"+(item.kind==="WORKSPACE"?"⌘":"⌕")+"</span><span><b>"+safe(item.title)+"</b><small>"+safe(item.detail)+"</small></span><kbd>"+(item.kind==="WORKSPACE"?"OPEN":"VIEW")+"</kbd></button>").join("")||
+    box.setAttribute("role","listbox");
+    box.innerHTML="<div class='global-search-results-heading'><strong>"+header+"</strong><span>"+items.length+" MATCHES</span></div>"+
+      (items.map(item=>"<button type='button' role='option' aria-selected='false' class='global-search-result' data-global-result='"+safe(item.id)+"' data-global-kind='"+safe(item.kind)+"' data-global-query='"+safe(item.query||"")+"'><span class='global-search-result-icon'>"+(item.kind==="WORKSPACE"?"⌘":"⌕")+"</span><span><b>"+safe(item.title)+"</b><small>"+safe(item.detail)+"</small></span><kbd>"+(item.kind==="WORKSPACE"?"OPEN":"VIEW")+"</kbd></button>").join("")||
       "<div class='global-search-empty'>No exact matches. Press Enter to search the local demo dataset.</div>")+
       (value?"<button type='button' class='global-search-result global-search-all' data-global-result='osint-search' data-global-kind='SEARCH' data-global-query='"+safe(value)+"'><span class='global-search-result-icon'>⌕</span><span><b>Search all demo observations</b><small>Filter the local OSINT sample dataset for “"+safe(value)+"”.</small></span><kbd>ENTER</kbd></button>":"");
     box.hidden=false;$("#global-search").setAttribute("aria-expanded","true");
