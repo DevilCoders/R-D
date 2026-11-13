@@ -35,6 +35,7 @@ try{
   const uiSource=await readFile("src/enhancements.js","utf8");
   const adapterSource=await readFile("src/demo-api.js","utf8");
   const indexSource=await readFile("index.html","utf8");
+  const cssSource=await readFile("src/demo.css","utf8");
   const manifest=JSON.parse(await readFile("concept/manifest.json","utf8"));
   assert.ok(appSource.includes("function iconFor"));
   assert.ok(appSource.includes("nav-group-toggle"));
@@ -51,7 +52,8 @@ try{
   assert.ok(appSource.includes("function positionGlobalSearch"));
   assert.ok(appSource.includes('document.body.appendChild(globalResults)'));
   assert.ok(appSource.includes('window.addEventListener("resize"'));
-  assert.ok(uiSource===uiSource);
+  assert.ok(cssSource.includes("#global-search-results.global-search-results{"));
+  assert.ok(cssSource.includes("#global-search-results.global-search-results[hidden]{display:none!important}"));
   assert.ok(!indexSource.includes("target-authorized"));
   assert.ok(uiSource.includes("function ensureLiveLog"));
   assert.ok(uiSource.includes("DEMO_TELEMETRY_PULSE"));
