@@ -49,6 +49,12 @@ try{
   assert.equal(record.status,201);
   assert.ok(record.body.id);
 
+  const disposable=await json("/api/records","POST",{module:"reconnaissance",title:"Smoke delete record"});
+  assert.equal(disposable.status,201);
+  const deleted=await json("/api/records/"+disposable.body.id,"DELETE");
+  assert.equal(deleted.status,200);
+  assert.equal(deleted.body.ok,true);
+
   const task=await json("/api/tasks","POST",{module:"operations",title:"Smoke test demo task",description:"Synthetic only"});
   assert.equal(task.status,201);
   assert.equal(task.body.state,"Awaiting approval");

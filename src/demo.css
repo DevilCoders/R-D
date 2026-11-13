@@ -52,3 +52,7 @@
 .demo-global-actions .demo-rail-actions{justify-content:flex-end}
 .demo-concept-card:focus-visible,.nav-group-toggle:focus-visible,.side-link:focus-visible{outline:1px solid #ed5365;outline-offset:2px}
 @media(max-width:820px){.nav-group-toggle{min-height:38px}.nav-children .side-link{height:35px}}
+
+.demo-info-button{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;appearance:none;transition:border-color .18s,background .18s,transform .18s}
+.demo-info-button:hover{border-color:#96505c;background:#151f2b;transform:translateY(-1px)}
+.demo-info-button:focus-visible{outline:1px solid #e75a6c;outline-offset:2px}
