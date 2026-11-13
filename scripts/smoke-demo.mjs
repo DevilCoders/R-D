@@ -144,7 +144,7 @@ try{
     removeItem:key=>store.delete(key)
   };
   const sandbox={
-    window:{},localStorage,document:{baseURI:"https://demo.invalid/"},
+    window:{},localStorage,document:{baseURI:"https://demo.invalid/"},URL,
     fetch:async()=>{throw new TypeError("offline for fallback test");}
   };
   vm.runInNewContext(adapterSource,sandbox,{filename:"src/demo-api.js"});
