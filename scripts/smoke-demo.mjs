@@ -48,6 +48,7 @@ try{
   assert.ok(compiledCss.includes("position:fixed!important"));
   assert.ok(appSource.includes("function renderGlobalSearch"));
   assert.ok(appSource.includes("function selectGlobalSearchResult"));
+  assert.ok(appSource.includes('const buttons=$$("[data-global-result]"'));
   assert.ok(appSource.includes('const buttons=$("[data-global-result]"'));
   assert.ok(indexSource.includes("workspace-switcher-menu"));
   assert.ok(indexSource.includes("global-search-results"));

@@ -478,7 +478,7 @@
     });
     globalResults.addEventListener("click",e=>{const button=e.target.closest("[data-global-result]");if(button)selectGlobalSearchResult(button);});
     globalResults.addEventListener("keydown",e=>{
-      const buttons=$("[data-global-result]",globalResults),current=Array.from(buttons).indexOf(document.activeElement);
+      const buttons=$$("[data-global-result]",globalResults),current=Array.from(buttons).indexOf(document.activeElement);
       if(e.key==="Escape"){e.preventDefault();closeGlobalSearch();globalInput.focus();}
       if(e.key==="ArrowDown"||e.key==="ArrowUp"){
         e.preventDefault();
