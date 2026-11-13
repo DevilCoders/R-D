@@ -3,7 +3,7 @@
 "use strict";
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const api=()=>window.DevilEyeDemoAPI,esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const names=["Command Center","Targets","Reconnaissance","OSINT Search","Domain Analysis","IP / Port / MAC","Network Mapping","Social Intelligence","Geolocation","Tech Stack","Surface Web","Deep Web","Dark Web","Vulnerability Scan","Exploit Search","Security Analysis","Operations","Post Engagement","Privilege Review"];
+let conceptItems=null;
 let query="",statusFilter="ALL",lastDetail=null;
 const modules={
 "operations":"<div class='demo-concept-note'>Approval state is local demo workflow only. No task triggers a scan, agent or external request.</div><div id='demo-task-queue' class='demo-viz-card'><div class='demo-viz-heading'><b>WORKFLOW QUEUE</b><span>LOADING</span></div><div class='demo-viz-body'></div></div>",
@@ -37,11 +37,50 @@ function worldMapPanel(){const points=[["NEW YORK","29.4%","27.8%"],["LONDON","5
 function relationPanel(){return "<div class='demo-viz-grid'><div class='demo-viz-card'><div class='demo-viz-heading'><b>ENTITY RELATIONSHIP GRAPH</b><span>SELECT NODE</span></div><div class='demo-viz-body'><svg viewBox='0 0 600 290' style='width:100%;height:auto'><g stroke='#73404a' stroke-width='2'><path d='M300 140L130 65M300 140L470 65M300 140L130 225M300 140L470 225M130 65L470 65M130 225L470 225'/></g>"+[["ASSET",300,140],["DOMAIN",130,65],["CERT",470,65],["TECH",130,225],["ADVISORY",470,225]].map(p=>"<g class='demo-rel-node' data-demo-entity='"+p[0]+"'><circle cx='"+p[1]+"' cy='"+p[2]+"' r='35' fill='#14202b' stroke='#b14c5b' stroke-width='2'/><text x='"+p[1]+"' y='"+(p[2]+4)+"' fill='#e3eaf1' font-size='12' text-anchor='middle'>"+p[0]+"</text></g>").join("")+"</svg></div></div><div class='demo-viz-card'><div class='demo-viz-heading'><b>ENTITY INSPECTOR</b><span>DEMO</span></div><div class='demo-viz-body' id='demo-rel-inspector'><div class='demo-inspector'><h4>Fusion graph</h4><p>Sample graph entities. Confidence must be human-reviewed.</p></div></div></div></div>";}
 function current(){return location.hash.slice(1)||"dashboard";}
 function toast(msg){const t=$("#toast");if(!t)return;t.textContent=msg;t.classList.add("visible");clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove("visible"),3500);}
-function addSidebar(){const g=$("#sidebar-groups");if(!g||$("[data-demo-page='concept-library']",g))return;const n=document.createElement("div");n.className="nav-group";n.innerHTML="<div class='nav-group-label'>REFERENCE LIBRARY</div><button class='side-link' type='button' data-demo-page='concept-library'><span class='side-icon'>▧</span><span>Concept Library</span></button>";g.append(n);}
-function conceptNames(){return names;}
-function openDialog(title,body,action="",wide=false){const o=$("#demo-overlay");if(!o)return;o.innerHTML="<section class='demo-dialog "+(wide?"wide":"")+"' role='dialog' aria-modal='true'><header class='demo-dialog-head'><div><small>DEVIL EYE / DEMO CONTROL</small><h3>"+title+"</h3></div><button class='icon-button' type='button' data-demo-close>×</button></header><div class='demo-dialog-body'>"+body+"</div><footer class='demo-dialog-actions'>"+action+"<button class='btn-secondary' type='button' data-demo-close>Close</button></footer></section>";o.classList.add("open");o.setAttribute("aria-hidden","false");}
-function closeDialog(){const o=$("#demo-overlay");if(o){o.classList.remove("open");o.setAttribute("aria-hidden","true");o.innerHTML="";}}
-function renderConceptLibrary(){const ws=$("#workspace");if(!ws)return;$("#page-title").textContent="Concept Library";$("#breadcrumbs").innerHTML="<span>DEVIL EYE</span><b>/</b><span>REFERENCE LIBRARY</span><b>/</b><strong>Concept Library</strong>";document.title="Concept Library — DEVIL EYE / R&D";const cards=conceptNames().map((n,i)=>"<article class='demo-concept-card' tabindex='0' role='button' data-concept='"+i+"'><img class='demo-concept-thumb' loading='lazy' src='./concept/"+i+".png' alt='DEVIL EYE concept "+i+"'><div class='demo-concept-meta'><b>"+String(i).padStart(2,"0")+" / "+n+"</b><span>OPEN ↗</span></div></article>").join("");ws.innerHTML="<div class='workspace-hero'><div><span class='section-kicker'>VISUAL SPECIFICATION / 19 ORIGINAL REFERENCES</span><h2>Concept <span class='text-gradient'>library.</span></h2><p>Original concept images, preserved in their numbered sequence. Select a card to open a full-resolution preview.</p></div><span class='demo-stamp'>19 CONCEPTS / LOCAL ASSETS</span></div><p class='demo-concept-note'>Visual references are kept as image assets in concept/, not scattered across the repository root.</p><div class='demo-concept-grid'>"+cards+"</div>";$("#workspace-scroll").scrollTop=0;addSidebar();}
+function addSidebar(){
+ if(window.DevilEyeNavigation && window.DevilEyeNavigation.registerGroup){
+  window.DevilEyeNavigation.registerGroup({id:"reference-library",label:"REFERENCE LIBRARY",icon:"knowledge",items:[["concept-library","Concept Library","knowledge","demo"]]});
+  return;
+ }
+ const g=$("#sidebar-groups");
+ if(!g || $("[data-demo-page='concept-library']",g)) return;
+ const n=document.createElement("section");n.className="nav-group";
+ n.innerHTML="<button class='nav-group-toggle' type='button' aria-expanded='true'><span class='nav-group-icon'>▧</span><span>REFERENCE LIBRARY</span><span class='nav-chevron'>⌄</span></button><div class='nav-children'><button class='side-link' type='button' data-demo-page='concept-library'><span class='side-icon'>▧</span><span>Concept Library</span></button></div>";
+ g.append(n);
+}
+async function loadConceptItems(){
+ if(conceptItems) return conceptItems;
+ try{
+  const response=await fetch("./concept/manifest.json",{cache:"no-store"});
+  if(!response.ok) throw new Error("Concept manifest unavailable");
+  const manifest=await response.json();
+  conceptItems=(manifest.images||[]).filter(item=>item && /^[a-zA-Z0-9_.-]+\\.png$/.test(item.file||""))
+    .sort((a,b)=>(a.sequence??0)-(b.sequence??0));
+ }catch(_){
+  conceptItems=Array.from({length:19},(_,i)=>({id:"concept-"+String(i).padStart(2,"0"),file:i+".png",sequence:i,title:"DEVIL EYE reference "+String(i).padStart(2,"0")}));
+ }
+ return conceptItems;
+}
+function conceptNames(){return (conceptItems||[]).map(item=>item.title||item.id);}
+async function renderConceptLibrary(){
+ const ws=$("#workspace");if(!ws)return;
+ addSidebar();
+ $("#page-title").textContent="Concept Library";
+ $("#breadcrumbs").innerHTML="<span>DEVIL EYE</span><b>/</b><span>REFERENCE LIBRARY</span><b>/</b><strong>Concept Library</strong>";
+ document.title="Concept Library — DEVIL EYE / R&D";
+ const items=await loadConceptItems();
+ const cards=items.map((item,i)=>{
+  const src="./concept/"+encodeURIComponent(item.file);
+  const title=esc(item.title||item.id||("Concept "+i));
+  return "<article class='demo-concept-card' tabindex='0' role='button' data-concept-index='"+i+"' data-concept-file='"+esc(item.file)+"' data-concept-title='"+title+"' aria-label='Open "+title+"'>"+
+   "<img class='demo-concept-thumb' loading='lazy' src='"+src+"' alt='"+title+"'>"+
+   "<div class='demo-concept-meta'><b>"+String(item.sequence??i).padStart(2,"0")+" / "+title+"</b><span>OPEN ↗</span></div></article>";
+ }).join("");
+ ws.innerHTML="<div class='workspace-hero'><div><span class='section-kicker'>VISUAL SPECIFICATION / "+items.length+" ORIGINAL REFERENCES</span><h2>Concept <span class='text-gradient'>library.</span></h2><p>Concept assets load from concept/manifest.json. New entries appear here when added to the manifest.</p></div><span class='demo-stamp'>"+items.length+" CONCEPTS / LOCAL ASSETS</span></div>"+
+ "<p class='demo-concept-note'>Select a card for a full-resolution preview. Original image files remain in the concept/ directory.</p><div class='demo-concept-grid'>"+cards+"</div>";
+ $("#workspace-scroll").scrollTop=0;
+ if(window.DevilEyeNavigation)window.DevilEyeNavigation.openGroup("reference-library");
+}
 function insertWorkspace(){const id=current(),ws=$("#workspace");if(!ws)return;addSidebar();if(id==="concept-library"){renderConceptLibrary();return;}if(modules[id]&&!$(".demo-module-visual",ws)){const block=document.createElement("section");block.className="demo-module-visual";block.innerHTML="<div class='demo-rail'><div class='demo-rail-copy'><b>"+id.toUpperCase().replaceAll("-"," ")+"</b> <span> / interactive synthetic demo</span></div><div class='demo-rail-actions'><button class='demo-small-button' data-demo-action='add-record'>＋ Add observation</button><button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='export'>⇩ Export</button></div></div>"+modules[id];const anchor=$(".module-strip",ws)||$(".metric-grid",ws)||ws.firstElementChild;if(anchor)anchor.parentNode.insertBefore(block,anchor.nextSibling);else ws.prepend(block);}if(id==="operations")renderQueue();renderDemoRecords();if(id==="settings"&&!$("[data-demo-action='reset']",ws)){const card=document.createElement("section");card.className="panel-card";card.innerHTML="<div class='panel-heading'><div><span class='panel-kicker'>DEMO STATE</span><h3>Backend controls</h3></div></div><div style='padding:14px'><p class='demo-concept-note'>Reset clears synthetic demo records, task states and audit history from the active demo store.</p><button class='btn-secondary' data-demo-action='reset'>Reset demo state</button> <button class='btn-secondary' data-demo-open='audit'>View audit log</button></div>";ws.append(card);}}
 function ensureFilters(){const ws=$("#workspace");if(!ws||$(".demo-filter-row",ws))return;const p=$$(".panel-card",ws).find(x=>$("[data-local-search]",x));if(!p)return;const bar=document.createElement("div");bar.className="demo-filter-row";bar.innerHTML="<button class='demo-filter-chip active' data-demo-filter='ALL'>All</button><button class='demo-filter-chip' data-demo-filter='verified'>Verified</button><button class='demo-filter-chip' data-demo-filter='review'>Review</button><button class='demo-filter-chip' data-demo-filter='high'>High / critical</button><span class='demo-count'></span>";const t=$(".table-wrap",p);if(t)p.insertBefore(bar,t);}
 function applyFilters(){const ws=$("#workspace");if(!ws)return;const rows=$$("tbody tr",ws);rows.forEach(r=>{const text=r.textContent.toLowerCase(),status=$$("td",r).slice(-1)[0]?.textContent.toLowerCase()||"";r.classList.toggle("hidden-row",!(!query||text.includes(query.toLowerCase()))||!(statusFilter==="ALL"||status.includes(statusFilter)));});const c=$(".demo-count",ws);if(c)c.textContent=rows.filter(r=>!r.classList.contains("hidden-row")).length+" / "+rows.length+" VISIBLE";}
@@ -64,7 +103,7 @@ function detail(row){const cells=$$("td",row).map(x=>x.textContent.trim()),heads
 async function showAudit(){const st=await api().state();const items=(st.audit||[]).slice(0,100);openDialog("Audit log","<p class='demo-concept-note'>Local demo events only. This is not a production security audit trail.</p><div class='demo-audit-list'>"+(items.map(x=>"<div class='demo-audit-item'><code>"+esc(x.action)+"</code><span>"+esc(x.detail)+"</span><time>"+esc(new Date(x.at).toLocaleString())+"</time></div>").join("")||"<div class='demo-empty'>No audit events.</div>")+"</div>","",true);}
 async function exportState(){const st=await api().state();const data={notice:"SYNTHETIC DEMO DATA ONLY — NOT REAL SECURITY FINDINGS",project:"DEVIL EYE / R&D",page:current(),generatedAt:new Date().toISOString(),state:st};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="devil-eye-demo-"+current()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);await api().addAudit("DEMO_DATA_EXPORTED",current());toast("Demo state exported as JSON.");}
 async function updateBadge(){const b=$("#demo-api-badge");if(!b)return;const s=await api().probe();b.classList.toggle("offline",!s.online);b.innerHTML="<i></i>"+(s.online?"LOCAL NODE DEMO API":"BROWSER LOCAL DEMO");}
-async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-action],[data-demo-open],[data-demo-close],[data-demo-submit],[data-demo-filter],[data-demo-port],[data-demo-review],[data-demo-decision],[data-demo-cancel],[data-concept],[data-map-point],[data-demo-entity],[data-demo-copy],[data-source-filter],[data-action],[data-toast],[data-record-review],#osint-submit");if(!b)return;
+async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-action],[data-demo-open],[data-demo-close],[data-demo-submit],[data-demo-filter],[data-demo-port],[data-demo-review],[data-demo-decision],[data-demo-cancel],[data-concept-index],[data-map-point],[data-demo-entity],[data-demo-copy],[data-source-filter],[data-action],[data-toast],[data-record-review],#osint-submit");if(!b)return;
  if(b.id==="osint-submit"){e.preventDefault();e.stopImmediatePropagation();const input=$("#osint-query");query=input?input.value.trim():"";statusFilter="ALL";applyFilters();const matches=$("#workspace tbody tr").filter(r=>!r.classList.contains("hidden-row")).length;toast(matches+" matching local sample records. No external request was sent.");return;}
  if(b.dataset.action){e.preventDefault();e.stopImmediatePropagation();if(b.dataset.action==="demo-run"){openTaskDialog();return;}if(b.dataset.action==="add-target"){const modal=$("#target-modal");if(modal){modal.classList.add("open");modal.setAttribute("aria-hidden","false");$("#target-value")?.focus();}return;}if(b.dataset.action==="export"){exportState();return;}if(b.dataset.action==="filter"){ensureFilters();toast("Filter controls opened.");return;}if(b.dataset.action==="refresh"){await api().state();await renderQueue();await renderDemoRecords();toast("Demo workspace refreshed.");return;}}
  if(b.dataset.toast&&b.dataset.toast.includes("Panel menu")){e.preventDefault();e.stopImmediatePropagation();openDialog("Panel actions","<p class='demo-concept-note'>Actions apply to the current workspace's synthetic sample records.</p><div class='demo-card-grid'><button class='demo-small-button' data-demo-action='add-record'>＋ Add observation</button><button class='demo-small-button' data-demo-action='create-task'>＋ Create task</button><button class='demo-small-button' data-demo-action='export'>⇩ Export state</button></div>");return;}
@@ -83,7 +122,13 @@ async function onClick(e){const b=e.target.closest("[data-demo-page],[data-demo-
  if(b.dataset.demoReview){await api().addAudit("DEMO_REVIEW_OPENED",b.dataset.demoReview);toast("Opened sample review: "+b.dataset.demoReview);return;}
  if(b.dataset.demoDecision){try{await api().decideTask(b.dataset.task,b.dataset.demoDecision);await renderQueue();toast("Demo task updated. No execution was triggered.");}catch(err){toast(err.message);}return;}
  if(b.dataset.demoCancel){try{await api().cancelTask(b.dataset.demoCancel);await renderQueue();toast("Demo task cancelled.");}catch(err){toast(err.message);}return;}
- if(b.dataset.concept!==undefined){const i=Number(b.dataset.concept);openDialog("Concept "+String(i).padStart(2,"0")+" / "+names[i],"<img src='./concept/"+i+".png' alt='Full-size DEVIL EYE concept "+i+"' style='display:block;width:100%;height:auto;border:1px solid #2d3b49;background:#05080d'><p class='demo-concept-note'>Original source image · concept/"+i+".png · preserved unchanged.</p>","<a class='btn-secondary' href='./concept/"+i+".png' target='_blank' rel='noreferrer'>Open original ↗</a>",true);return;}
+ if(b.dataset.conceptIndex!==undefined){
+  const i=Number(b.dataset.conceptIndex),file=b.dataset.conceptFile,title=b.dataset.conceptTitle||("Concept "+i);
+  if(!file || !/^[a-zA-Z0-9_.-]+\\.png$/.test(file)){toast("Invalid concept asset path.");return;}
+  const src="./concept/"+encodeURIComponent(file);
+  openDialog(title,"<img src='"+src+"' alt='"+esc(title)+"' style='display:block;width:100%;height:auto;border:1px solid #2d3b49;background:#05080d'><p class='demo-concept-note'>Original source image · concept/"+esc(file)+" · preserved unchanged.</p>","<a class='btn-secondary' href='"+src+"' target='_blank' rel='noreferrer'>Open original ↗</a>",true);
+  return;
+ }
  if(b.dataset.mapPoint){const box=$("#demo-geo-inspector");if(box){box.innerHTML="<div class='demo-inspector'><span class='eyebrow'>SYNTHETIC SIGNAL</span><h4>"+esc(b.dataset.mapPoint)+"</h4><p>"+esc(b.dataset.mapLocation||"")+" · "+esc(b.dataset.mapDetail||"")+" · No live geolocation was queried.</p></div>";}else{toast((b.dataset.mapLocation||b.dataset.mapPoint)+" · "+(b.dataset.mapDetail||"demo marker")+" · synthetic only");}$$(".world-map-point").forEach(x=>x.classList.toggle("selected",x===b));return;}
  if(b.dataset.demoEntity){const box=$("#demo-rel-inspector");if(box)box.innerHTML="<div class='demo-inspector'><span class='eyebrow'>ENTITY / SAMPLE GRAPH</span><h4>"+esc(b.dataset.demoEntity)+"</h4><p>Illustrative entity. Confidence and provenance require human review.</p></div>";return;}
  if(b.hasAttribute("data-demo-copy")&&lastDetail){const obj={};lastDetail.heads.forEach((h,i)=>obj[h]=lastDetail.cells[i]);try{await navigator.clipboard.writeText(JSON.stringify(obj,null,2));toast("Row JSON copied.");}catch{toast(JSON.stringify(obj));}return;}

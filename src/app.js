@@ -399,7 +399,8 @@
     registerGroup(group){
       if(!group || !group.id || !Array.isArray(group.items)) return false;
       const index=navGroups.findIndex(item=>item.id===group.id);
-      if(index>=0) navGroups[index]=group; else navGroups.push(group);
+      if(index>=0) return true;
+      navGroups.push(group);
       if(navExpanded[group.id]===undefined) navExpanded[group.id]=true;
       try{localStorage.setItem("rd-nav-expanded",JSON.stringify(navExpanded));}catch(_){}
       renderSidebar();
